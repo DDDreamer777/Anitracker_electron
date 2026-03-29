@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline';">
+    <title>AniTrack - Hardware</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='home.html'"> &lt; 返回主界面</button>
+
+    <div class="home-container" style="gap: 16px; align-items: center; justify-content: center;">
+        <h2>硬件控制界面启动中^_^</h2>
+        <p id="hardwareStatus">正在调出树莓派控制窗口，请稍候！</p>
+        <div style="display: flex; justify-content: center; width: auto;">
+            <button class="main-entry-button" onclick="openHardwareWindow()">重新打开硬件界面</button>
+        </div>
+    </div>
+
+    <script>
+        // [HW-INTEGRATION v2026.03.17] 渲染进程硬件路由入口
+        async function openHardwareWindow() {
+            const status = document.getElementById('hardwareStatus');
+            status.textContent = '正在请求打开硬件控制窗口...';
+            console.info('[USER_OP] Hardware route page requested hardware control window.');
+
+            try {
+                const result = await window.electronAPI.openHardwareControl();
+                if (result && result.success) {
+                    status.textContent = '硬件控制窗口已打开，可返回主界面继续其他操作';
+                } else {
+                    status.textContent = `打开失败：${result?.error || '未知错误'}`;
+                }
+            } catch (error) {
+                status.textContent = `打开失败：${error.message}`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', openHardwareWindow);
+    </script>
+</body>
+</html>

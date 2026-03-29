@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>斑马鱼行为学实验-树莓派LED/音频控制器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            padding: 30px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .config-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .config-section label {
+            font-size: 16px;
+            color: #34495e;
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        .config-section input {
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            width: 200px;
+            font-size: 14px;
+        }
+        .control-card {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .control-card h2 {
+            color: #2980b9;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-led-red {
+            background: #e74c3c;
+            color: #fff;
+        }
+        .btn-led-green {
+            background: #2ecc71;
+            color: #fff;
+        }
+        .btn-led-blue {
+            background: #3498db;
+            color: #fff;
+        }
+        .btn-led-white {
+            background: #f1c40f;
+            color: #2c3e50;
+        }
+        .btn-led-off {
+            background: #95a5a6;
+            color: #fff;
+        }
+        .btn-audio-play {
+            background: #8e44ad;
+            color: #fff;
+            padding: 8px 16px;
+        }
+        .audio-input {
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            width: 250px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .status-bar {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #fff;
+            display: none;
+        }
+        .status-success {
+            background: #27ae60;
+            display: block;
+        }
+        .status-error {
+            background: #c0392b;
+            display: block;
+        }
+        .status-loading {
+            background: #f39c12;
+            display: block;
+        }
+        .hint {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #7f8c8d;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>斑马鱼行为学实验-树莓派LED/音频控制器</h1>
+
+        <!-- 树莓派IP配置区域 -->
+        <div class="config-section">
+            <label for="raspberry-ip">树莓派IP地址：</label>
+            <input type="text" id="raspberry-ip" value="192.168.1.100" placeholder="请输入树莓派局域网IP">
+            <p class="hint">提示：树莓派需与电脑在同一局域网，可通过树莓派终端输入 <code>ifconfig</code> 查看IP</p>
+        </div>
+
+        <!-- LED控制区域 -->
+        <div class="control-card">
+            <h2>中心3x3 LED灯珠控制</h2>
+            <div class="btn-group">
+                <button class="btn btn-led-red" onclick="controlLED('red')">红灯开启</button>
+                <button class="btn btn-led-green" onclick="controlLED('green')">绿灯开启</button>
+                <button class="btn btn-led-blue" onclick="controlLED('blue')">蓝灯开启</button>
+                <button class="btn btn-led-white" onclick="controlLED('white')">白灯开启</button>
+                <button class="btn btn-led-off" onclick="controlLED('off')">灯光关闭</button>
+            </div>
+            <div class="status-bar" id="led-status">通信状态提示</div>
+            <p class="hint">协议说明：向树莓派9999端口发送指令（red/green/blue/white/off），树莓派返回OK表示执行成功</p>
+        </div>
+
+        <!-- 音频控制区域 -->
+        <div class="control-card">
+            <h2>扬声器音频播放控制</h2>
+            <input type="text" class="audio-input" id="audio-file" placeholder="请输入WAV文件名（如：test.wav）" value="test.wav">
+            <button class="btn btn-audio-play" onclick="playAudio()">播放音频</button>
+            <div class="status-bar" id="audio-status">通信状态提示</div>
+            <p class="hint">提示1：音频文件需放在树莓派的 ./audio_files 目录下，仅支持WAV格式<br>
+            提示2：向树莓派9998端口发送文件名，树莓派通过aplay命令播放，返回OK表示指令接收成功</p>
+        </div>
+    </div>
+
+    <script>
+        // 引入Node.js的net模块（TCP通信核心，Electron已开启nodeIntegration，可直接使用）
+        const net = require('net');
+        const { ipcRenderer } = require('electron');
+
+        // 全局获取树莓派IP
+        function getRaspberryIP() {
+            return document.getElementById('raspberry-ip').value.trim();
+        }
+
+        // 显示状态提示
+        function showStatus(elementId, text, type) {
+            const status = document.getElementById(elementId);
+            status.textContent = text;
+            status.className = 'status-bar';
+            status.classList.add(type === 'success' ? 'status-success' : type === 'error' ? 'status-error' : 'status-loading');
+            // 3秒后隐藏提示
+            setTimeout(() => {
+                status.className = 'status-bar';
+            }, 3000);
+        }
+
+        // **************************
+        // LED控制：向9999端口发送TCP指令
+        // **************************
+        function controlLED(cmd) {
+            const ip = getRaspberryIP();
+            if (!ip) {
+                showStatus('led-status', '错误：请输入树莓派IP地址', 'error');
+                return;
+            }
+
+            showStatus('led-status', `正在向${ip}:9999发送${cmd}指令...`, 'loading');
+
+            // 创建TCP客户端
+            const client = new net.Socket();
+            // 连接超时时间：3秒
+            client.setTimeout(3000);
+
+            // 连接树莓派LED TCP服务端（9999端口）
+            client.connect(9999, ip, () => {
+                // 连接成功，发送指令
+                client.write(cmd + '\n');
+            });
+
+            // 接收树莓派返回数据
+            client.on('data', (data) => {
+                const response = data.toString().trim();
+                if (response === 'OK') {
+                    showStatus('led-status', `执行成功：${cmd}指令已生效`, 'success');
+                } else {
+                    showStatus('led-status', `执行异常：树莓派返回${response}`, 'error');
+                }
+                client.destroy(); // 关闭连接
+            });
+
+            // 连接错误（IP错误、端口未开启、网络不通）
+            client.on('error', (err) => {
+                showStatus('led-status', `连接失败：${err.message}，请检查IP和树莓派服务是否运行`, 'error');
+                client.destroy();
+            });
+
+            // 连接超时
+            client.on('timeout', () => {
+                showStatus('led-status', '超时：连接树莓派超时，请检查网络和IP', 'error');
+                client.destroy();
+            });
+        }
+
+        // **************************
+        // 音频控制：向9998端口发送TCP指令
+        // **************************
+        function playAudio() {
+            const ip = getRaspberryIP();
+            const audioFile = document.getElementById('audio-file').value.trim();
+            if (!ip) {
+                showStatus('audio-status', '错误：请输入树莓派IP地址', 'error');
+                return;
+            }
+            if (!audioFile) {
+                showStatus('audio-status', '错误：请输入WAV音频文件名', 'error');
+                return;
+            }
+
+            showStatus('audio-status', `正在向${ip}:9998发送播放指令：${audioFile}`, 'loading');
+
+            // 创建TCP客户端
+            const client = new net.Socket();
+            client.setTimeout(3000);
+
+            // 连接树莓派音频TCP服务端（9998端口）
+            client.connect(9998, ip, () => {
+                client.write(audioFile + '\n');
+            });
+
+            // 接收返回数据
+            client.on('data', (data) => {
+                const response = data.toString().trim();
+                if (response === 'OK') {
+                    showStatus('audio-status', `指令成功：已触发${audioFile}播放`, 'success');
+                } else {
+                    showStatus('audio-status', `指令异常：树莓派返回${response}`, 'error');
+                }
+                client.destroy();
+            });
+
+            // 错误处理
+            client.on('error', (err) => {
+                showStatus('audio-status', `连接失败：${err.message}，请检查IP和音频服务是否运行`, 'error');
+                client.destroy();
+            });
+
+            // 超时处理
+            client.on('timeout', () => {
+                showStatus('audio-status', '超时：连接树莓派超时，请检查网络和IP', 'error');
+                client.destroy();
+            });
+        }
+    </script>
+</body>
+</html>

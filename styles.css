@@ -1,0 +1,297 @@
+:root {
+    --background-color: #1e1e1e;
+    --panel-background-color: #252526;
+    --border-color: #3c3c3c;
+    --text-color: #cccccc;
+    --input-background: #3c3c3c;
+    --button-background: #4a4a4a;
+    --button-hover-background: #5a5a5a;
+    --hover-background: #2a2d2e;
+    --error-color: #f48771;
+    --progress-color: #3794ff;
+    --output-color: #81c784;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden; /* Prevent scrolling on the main interface */
+}
+
+.home-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* changed from 100% to 100vh to ensure it fills the viewport exactly */
+    width: 100vw; /* ensure full width */
+    padding: 20px; 
+    box-sizing: border-box; 
+    position: relative; 
+    overflow: hidden; /* doubly ensure no scrolling */
+    position: relative; /* Establish positioning context for absolute children */
+}
+
+.home-header {
+    margin-top: 20px; /* Leave space at the top */
+    margin-left: 20px; /* Align to the left but not touching the edge */
+    z-index: 10; /* Ensure header is above image if overlap occurs */
+}
+
+/* Center Image Styles */
+.home-center-image-container {
+    flex-grow: 1; /* Take up available space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Prevent overflow if image is too large */
+    /* Remove padding to ensure true centering relative to viewport, not content area */
+    padding: 0; 
+    position: absolute; /* Position absolutely to center in container */
+    top: 0;
+    left: 0;
+    width: 100vw; /* Explicitly use viewport width */
+    height: 100vh; /* Explicitly use viewport height */
+    z-index: 0; /* Behind other elements */
+    pointer-events: none; /* Allow clicks to pass through to buttons if needed */
+}
+
+.home-center-image {
+    max-width: 90%; /* Adjust size */
+    max-height: 90vh; /* Limit height */
+    object-fit: contain; /* Maintain aspect ratio */
+    opacity: 0.9; /* Optional: Slight transparency to blend better with dark theme */
+    filter: drop-shadow(0 0 20px rgba(0,0,0,0.5)); /* Soft glow/shadow */
+}
+
+.home-title {
+    margin: 0;
+    font-size: 2em;
+}
+
+.home-title-img {
+    height: 100px; /* Adjust height based on your image aspect ratio */
+    width: auto;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.home-subtitle {
+    margin-top: 10px;
+    font-size: 1em;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.home-action-area-right {
+    position: absolute;
+    bottom: 50px;
+    right: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Spacing between buttons */
+    align-items: flex-end;
+}
+
+.home-action-area-left {
+    position: absolute;
+    bottom: 50px;
+    left: 50px;
+}
+
+/* Grid layout for the software page */
+.grid-container {
+    display: grid;
+    grid-template-columns: 3fr 2fr; /* 左右两栏布局 */
+    grid-template-rows: 1fr auto;
+    gap: 10px;
+    flex: 1;
+    padding: 10px;
+    padding-top: 60px; /* Leave space for back button */
+}
+
+.video-player {
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1;
+    grid-column: 1;
+    flex: 2;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 4px;
+}
+
+.controls {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+}
+
+.right-panel {
+    grid-row: 1;
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: auto;
+}
+
+.file-browser, .python-controls {
+    padding: 10px;
+    background: var(--panel-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.file-browser {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-list {
+    margin-top: 10px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    background: var(--background-color);
+    padding: 5px;
+    flex-grow: 1; /* 占据剩余空间 */
+}
+
+.file-item {
+    padding: 5px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.file-item:hover {
+    background-color: var(--hover-background);
+}
+
+#output {
+    grid-row: 2;
+    grid-column: 1 / span 2;
+    background: var(--panel-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    overflow: auto;
+    font-family: monospace;
+    height: 150px;
+    resize: vertical;
+}
+
+.python-controls h3 {
+    margin-top: 0;
+}
+
+.btn-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+.btn-group button {
+    width: 100%;
+    margin-right: 0;
+}
+
+.btn-divider {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255, 255, 255, 0.25) 20%,
+        rgba(255, 255, 255, 0.15) 80%,
+    transparent 100%);
+    margin: 4px 0;
+}
+
+button {
+    background-color: var(--button-background);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: var(--button-hover-background);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.script-input {
+    width: 150px;
+    margin-right: 10px;
+    padding: 5px;
+    background-color: var(--input-background);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 4px;
+}
+
+.error-message {
+    color: var(--error-color);
+}
+
+.progress-message {
+    color: var(--progress-color);
+}
+
+.output-message {
+    color: var(--output-color);
+}
+
+/* New Back Button Style */
+.back-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    padding: 8px 15px;
+}
+
+.main-entry-button {
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    width: auto;               
+    text-align: center;
+    white-space: nowrap;
+}
+
+.disabled-button {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--button-background); /* Keep original background even on hover */
+}
+
+.disabled-button:hover {
+    background-color: var(--button-background); /* Prevent hover effect */
+}

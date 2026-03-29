@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; media-src 'self' 'unsafe-inline' file: blob: data:;">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Back Button -->
+    <button class="back-button" onclick="window.location.href='home.html'"> &lt; 返回主界面</button>
+
+    <div class="grid-container">
+        <!-- 左侧视频播放器 -->
+        <div class="video-player">
+            <video id="video1" controls></video>
+            <div class="controls">
+                <button onclick="selectVideo(1)">选择视频</button>
+            </div>
+        </div>
+        
+        <!-- 右侧控制面板 -->
+        <div class="right-panel">
+            <!-- 文件浏览器区域 -->
+            <div class="file-browser">
+                <div class="folder-path-row">
+                    <span class="folder-label">当前目录：</span>
+                    <div id="folderPath1" class="folder-path"></div>
+                </div>
+                <div id="fileList1" class="file-list"></div>
+                <button onclick="selectFolder(1)">选择文件夹</button>
+            </div>
+
+            <!-- Python控制区域 -->
+            <div class="python-controls">
+                <h3>智析</h3>
+                 <div class="btn-group">
+                    <button id="startPreprocessBtn" onclick="executePythonScript('preprocess')">预处理</button>
+                    <button id="stopScriptBtn" onclick="stopPythonScript()" disabled>终止当前进程</button>
+                    <button id="startDetectionBtn" onclick="executePythonScript('detection')">启动检测</button>
+                    <button id="startAnalysisBtn" onclick="executePythonScript('analysis')">启动分析</button>
+
+                    <input type="hidden" id="scriptArgs" value="">
+                    <input type="hidden" id="analysisScriptArgs" value="">
+
+                    <div class="btn-divider" role="separator"></div>
+
+                    <button id="openPreprocessBtn" onclick="openPreprocessFolder()">打开预处理目录</button>
+                    <button id="openResultsBtn" onclick="openResultsFolder()">打开分析结果目录</button>
+                    <button id="saveAsBtn" onclick="saveResultsAs()">分析结果另存为</button>
+                    <button id="aiSummaryBtn" onclick="saveResultsAs()">AI实验报告</button>
+                </div>
+            </div>
+
+        </div>
+            
+        
+        <!-- 输出栏 -->
+        <div id="output"></div>
+    </div>
+
+    <script src="renderer.js"></script>
+    <script>
+        // 新增函数：将文件夹路径用作参数
+        // function useFolderPathAsArg() {
+        //     const folderPath = document.getElementById('folderPath1').textContent;
+        //     if (folderPath) {
+        //         const scriptArgsInput = document.getElementById('scriptArgs');
+        //         // 将路径格式化为 --vd "路径" 的形式
+        //         scriptArgsInput.value = `--vd ${folderPath} --sd ${folderPath}_output`;
+        //         logMessage(`参数已设置为: ${scriptArgsInput.value}`);
+        //     } else {
+        //         alert('请先选择一个文件夹');
+        //     }
+        // }
+
+        function startServer() {
+            const scriptName = document.getElementById('serverScript').value.trim();
+            const port = parseInt(document.getElementById('serverPort').value) || 5000;
+            
+            if (!scriptName) {
+                alert('请输入服务器脚本名称');
+                return;
+            }
+            
+            window.startPythonServer(scriptName, port);
+        }
+        
+        function stopServer() {
+            window.stopPythonServer();
+        }
+    </script>
+</body>
+
+</html>

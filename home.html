@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; media-src 'self' 'unsafe-inline' file: blob: data:;">
+    <title>AniTrack - Home</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="home-container">
+        <!-- Center Image Display (Placed first to lie behind others simply via document flow if not absolute, but absolute is safer) -->
+        <div class="home-center-image-container">
+            <img src="assets/figures/fish2.png" alt="AniTrack Illustration" class="home-center-image">
+        </div>
+
+        <div class="home-header">
+            <img src="assets/fonts/font2.png" alt="AniTrack" class="home-title-img">
+            </p>
+        </div>
+        
+        <!-- Bottom left action area -->
+        <div class="home-action-area-left">
+             <button class="main-entry-button disabled-button" disabled>系统设置</button>
+        </div>
+
+        <!-- Bottom right action area -->
+        <div class="home-action-area-right">
+               <button class="main-entry-button" onclick="window.location.href='hardware.html'">硬件连接</button>
+             <button class="main-entry-button" onclick="window.location.href='software.html'">软件处理</button>
+        </div>
+    </div>
+</body>
+</html>
