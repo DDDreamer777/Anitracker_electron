@@ -6,37 +6,136 @@
     <title>AniTrack - Hardware</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="hardware-route-page">
     <button class="back-button" onclick="window.location.href='home.html'"> &lt; 返回主界面</button>
 
-    <div class="home-container" style="gap: 16px; align-items: center; justify-content: center;">
-        <h2>硬件控制界面启动中^_^</h2>
-        <p id="hardwareStatus">正在调出树莓派控制窗口，请稍候！</p>
-        <div style="display: flex; justify-content: center; width: auto;">
-            <button class="main-entry-button" onclick="openHardwareWindow()">重新打开硬件界面</button>
-        </div>
-    </div>
+    <main class="hardware-route-shell">
+        <section class="hardware-route-card" role="status" aria-live="polite" aria-atomic="true">
+            <div class="hardware-status-head">
+                <span id="hardwareSignalDot" class="hardware-signal-dot"></span>
+                <p class="hardware-kicker">Hardware Control</p>
+            </div>
+
+            <h2 id="hardwareStatusTitle" class="hardware-status-title">硬件控制界面启动中</h2>
+            <p id="hardwareStatusDetail" class="hardware-status-detail">正在调出树莓派控制窗口，请稍候。</p>
+            <p id="hardwareStatusMeta" class="hardware-status-meta">系统正在初始化连接流程...</p>
+
+            <div class="hardware-route-actions">
+                <button id="openHardwareBtn" class="main-entry-button hardware-open-button" onclick="openHardwareWindow({ manual: true })">重新打开硬件界面</button>
+            </div>
+        </section>
+    </main>
 
     <script>
         // [HW-INTEGRATION v2026.03.17] 渲染进程硬件路由入口
-        async function openHardwareWindow() {
-            const status = document.getElementById('hardwareStatus');
-            status.textContent = '正在请求打开硬件控制窗口...';
+        const statusElements = {
+            title: document.getElementById('hardwareStatusTitle'),
+            detail: document.getElementById('hardwareStatusDetail'),
+            meta: document.getElementById('hardwareStatusMeta'),
+            dot: document.getElementById('hardwareSignalDot'),
+            actionButton: document.getElementById('openHardwareBtn')
+        };
+
+        const statePreset = {
+            idle: {
+                title: '硬件连接入口已就绪',
+                detail: '点击按钮可重新打开硬件控制窗口。',
+                tone: 'idle'
+            },
+            loading: {
+                title: '正在建立硬件连接',
+                detail: '正在请求打开硬件控制窗口...',
+                tone: 'loading'
+            },
+            success: {
+                title: '硬件控制窗口已打开^_^',
+                detail: '可返回主界面继续其他流程，硬件窗口将保持独立运行。',
+                tone: 'success'
+            },
+            closed: {
+                title: '硬件控制窗口已关闭ovo',
+                detail: '检测到硬件窗口已关闭，可点击按钮重新打开硬件界面。',
+                tone: 'idle'
+            },
+            error: {
+                title: '硬件连接失败orz',
+                detail: '打开失败，请检查硬件服务状态后重试。',
+                tone: 'error'
+            }
+        };
+
+        let isOpening = false;
+
+        function formatNow() {
+            return new Date().toLocaleTimeString('zh-CN', { hour12: false });
+        }
+
+        function setStatus(state, detailOverride = '', metaOverride = '') {
+            const preset = statePreset[state] || statePreset.idle;
+            document.body.dataset.hardwareState = preset.tone;
+            statusElements.title.textContent = preset.title;
+            statusElements.detail.textContent = detailOverride || preset.detail;
+            statusElements.meta.textContent = metaOverride || `最近更新：${formatNow()}`;
+        }
+
+        function setOpeningButtonState(disabled) {
+            statusElements.actionButton.disabled = disabled;
+            statusElements.actionButton.textContent = disabled ? '正在打开硬件界面...' : '重新打开硬件界面';
+        }
+
+        function handleHardwareControlClosed(data) {
+            isOpening = false;
+            setOpeningButtonState(false);
+            setStatus('closed', '', `关闭时间：${formatNow()}（${data?.reason || '用户关闭'}）`);
+            console.info('[USER_OP] Hardware control window closed and route status updated.');
+        }
+
+        async function openHardwareWindow({ manual = false } = {}) {
+            if (isOpening) {
+                return;
+            }
+
+            isOpening = true;
             console.info('[USER_OP] Hardware route page requested hardware control window.');
 
+            const loadingMessage = manual
+                ? '正在请求打开硬件控制窗口...'
+                : '系统启动后正在自动拉起硬件控制窗口...';
+
+            setOpeningButtonState(true);
+            setStatus('loading', loadingMessage, `请求发起时间：${formatNow()}`);
+
             try {
-                const result = await window.electronAPI.openHardwareControl();
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('请求超时，请检查树莓派服务或稍后重试。')), 10000);
+                });
+
+                const result = await Promise.race([
+                    window.electronAPI.openHardwareControl(),
+                    timeoutPromise
+                ]);
+
                 if (result && result.success) {
-                    status.textContent = '硬件控制窗口已打开，可返回主界面继续其他操作';
+                    setStatus('success', '', `连接成功时间：${formatNow()}`);
                 } else {
-                    status.textContent = `打开失败：${result?.error || '未知错误'}`;
+                    setStatus('error', `打开失败：${result?.error || '未知错误'}`, `失败时间：${formatNow()}`);
                 }
             } catch (error) {
-                status.textContent = `打开失败：${error.message}`;
+                setStatus('error', `打开失败：${error.message}`, `失败时间：${formatNow()}`);
+            } finally {
+                isOpening = false;
+                setOpeningButtonState(false);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', openHardwareWindow);
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.electronAPI?.onHardwareControlClosed) {
+                window.electronAPI.onHardwareControlClosed(handleHardwareControlClosed);
+            }
+
+            setStatus('loading', '正在调出树莓派控制窗口，请稍候。', `初始化时间：${formatNow()}`);
+            openHardwareWindow();
+        });
     </script>
 </body>
 </html>

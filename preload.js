@@ -2,6 +2,11 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
     openHardwareControl: () => ipcRenderer.invoke('open-hardware-control'),
+    onHardwareControlClosed: (callback) => {
+        const listener = (_, data) => callback(data)
+        ipcRenderer.on('hardware-control-window-closed', listener)
+        return () => ipcRenderer.removeListener('hardware-control-window-closed', listener)
+    },
     selectVideo: (data) => ipcRenderer.invoke('select-video', data),
     selectFolder: (data) => ipcRenderer.invoke('select-folder', data),
     getFilesInFolder: (folderPath) => ipcRenderer.invoke('get-files-in-folder', folderPath),

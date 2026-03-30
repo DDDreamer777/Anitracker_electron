@@ -6,6 +6,8 @@ const iconv = require('iconv-lite')
 
 // [HW-INTEGRATION v2026.03.17] 硬件控制窗口实例（资源隔离：独立渲染进程）
 let hardwareControlWindow = null
+let hardwareRouteWindow = null
+let isAppQuitting = false
 
 // 处理 Windows 安装/卸载时的启动事件
 if (require('electron-squirrel-startup')) {
@@ -73,6 +75,14 @@ function createHardwareControlWindow() {
 
   hardwareControlWindow.on('closed', () => {
     console.info('[HW_OP] Hardware control window closed.')
+
+    if (!isAppQuitting && hardwareRouteWindow && !hardwareRouteWindow.isDestroyed()) {
+      hardwareRouteWindow.webContents.send('hardware-control-window-closed', {
+        closedAt: Date.now(),
+        reason: 'user-closed'
+      })
+    }
+
     hardwareControlWindow = null
   })
 }
@@ -85,10 +95,20 @@ app.whenReady().then(() => {
   })
 })
 
+app.on('before-quit', () => {
+  isAppQuitting = true
+})
+
 // [HW-INTEGRATION v2026.03.17] 渲染进程请求打开硬件控制界面
-ipcMain.handle('open-hardware-control', async () => {
+ipcMain.handle('open-hardware-control', async (event) => {
   try {
     console.info('[USER_OP] Request received: open hardware control window.')
+
+    const routeWindow = BrowserWindow.fromWebContents(event.sender)
+    if (routeWindow && !routeWindow.isDestroyed()) {
+      hardwareRouteWindow = routeWindow
+    }
+
     createHardwareControlWindow()
     return { success: true }
   } catch (error) {
