@@ -160,28 +160,166 @@ video {
 
 .file-browser {
     flex: 1;
-    overflow: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    padding: 12px;
+}
+
+.file-browser-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.folder-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.folder-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: #b7b7b7;
+}
+
+.folder-label-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #8a8a8a;
+    box-shadow: 0 0 0 2px rgba(132, 132, 132, 0.16);
+}
+
+.folder-source-tag {
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid #4c4c4c;
+    background: #2f2f2f;
+    color: #aaaaaa;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.folder-select-btn {
+    min-width: 110px;
+    justify-content: center;
+}
+
+.folder-path-shell {
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #434343;
+    background: linear-gradient(180deg, #222426 0%, #1f2123 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.folder-path-shell.is-empty {
+    background: linear-gradient(180deg, #232527 0%, #202224 100%);
+}
+
+.file-browser:focus-within .folder-path-shell,
+.folder-path-shell.is-active {
+    border-color: #5d5d5d;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 2px rgba(109, 109, 109, 0.18);
+}
+
+.folder-path {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #d4d4d4;
+    font-size: 13px;
+    line-height: 1.4;
+    font-family: "Consolas", "Segoe UI", "Microsoft YaHei UI", sans-serif;
+}
+
+.folder-path-shell.is-empty .folder-path {
+    color: #969696;
+    font-style: italic;
+}
+
+.file-browser-divider {
+    margin: 10px 0 8px;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
 }
 
 .file-list {
-    margin-top: 10px;
+    --file-row-height: 32px;
+    --file-list-visible-rows: 1;
+    margin-top: 0;
     overflow-y: auto;
-    border: 1px solid var(--border-color);
-    background: var(--background-color);
-    padding: 5px;
-    flex-grow: 1; /* 占据剩余空间 */
+    border: 1px solid #3f434a;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #1f2022 0%, #1b1c1e 100%);
+    padding: 6px;
+    flex-grow: 0;
+    height: calc((var(--file-row-height) * var(--file-list-visible-rows)) + 12px);
+    min-height: calc(var(--file-row-height) + 12px);
+    max-height: calc((var(--file-row-height) * 4) + 12px);
 }
 
 .file-item {
-    padding: 5px 8px;
+    min-height: var(--file-row-height);
+    box-sizing: border-box;
+    padding: 6px 8px;
     cursor: pointer;
     border-radius: 3px;
+    border: 1px solid transparent;
+    transition: background-color 120ms ease, border-color 120ms ease;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .file-item:hover {
-    background-color: var(--hover-background);
+    background-color: #333333;
+    border-color: rgba(120, 120, 120, 0.4);
+}
+
+.file-empty-state {
+    min-height: var(--file-row-height);
+    display: flex;
+    align-items: center;
+    color: #8f959e;
+    font-size: 12px;
+    padding: 0 6px;
+}
+
+.file-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.file-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+}
+
+.file-list::-webkit-scrollbar-thumb {
+    background: rgba(168, 168, 168, 0.32);
+    border-radius: 6px;
+}
+
+.file-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(188, 188, 188, 0.48);
 }
 
 #output {
@@ -268,12 +406,56 @@ button:disabled {
 }
 
 /* New Back Button Style */
+.back-button,
+.folder-select-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0;
+    min-height: 34px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(166, 166, 166, 0.38);
+    background: linear-gradient(120deg, #505050 0%, #464646 45%, #545454 100%);
+    color: #cdcdcd;
+    font-size: 13px;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease, background-color 170ms ease;
+    white-space: nowrap;
+}
+
+.back-button:hover,
+.folder-select-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(181, 181, 181, 0.5);
+    background: linear-gradient(120deg, #545454 0%, #4a4a4a 45%, #575757 100%);
+    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.back-button:active,
+.folder-select-btn:active {
+    transform: translateY(0) scale(0.985);
+}
+
+.back-button:focus-visible,
+.folder-select-btn:focus-visible {
+    outline: 2px solid rgba(206, 206, 206, 0.78);
+    outline-offset: 2px;
+}
+
+.back-button:disabled,
+.folder-select-btn:disabled {
+    opacity: 0.72;
+    cursor: not-allowed;
+}
+
 .back-button {
     position: absolute;
     top: 10px;
     left: 10px;
     z-index: 1000;
-    padding: 8px 15px;
 }
 
 .software-page .top-left-actions {

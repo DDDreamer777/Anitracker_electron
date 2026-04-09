@@ -6,6 +6,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileList2 = document.getElementById('fileList2');
     const folderPath1 = document.getElementById('folderPath1');
     const folderPath2 = document.getElementById('folderPath2');
+    const folderPathShell1 = document.getElementById('folderPathShell1');
+    const FOLDER_PATH_PLACEHOLDER = '请选择文件夹路径';
+
+    function syncFolderPathVisualState(pathElement, shellElement, placeholderText) {
+        if (!pathElement || !shellElement) {
+            return;
+        }
+
+        const value = pathElement.textContent ? pathElement.textContent.trim() : '';
+        const isEmpty = !value || value === placeholderText;
+        shellElement.classList.toggle('is-empty', isEmpty);
+        shellElement.classList.toggle('is-active', !isEmpty);
+        pathElement.title = isEmpty ? placeholderText : value;
+    }
+
+    function syncFileListVisualRows(fileListElement, itemCount) {
+        if (!fileListElement) {
+            return;
+        }
+
+        const safeCount = Number.isFinite(itemCount) ? itemCount : 0;
+        const visibleRows = Math.max(1, Math.min(4, safeCount));
+        fileListElement.style.setProperty('--file-list-visible-rows', String(visibleRows));
+    }
 
     // 视频错误监听
     [video1, video2].forEach((video, index) => {
@@ -68,7 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveAsBtn = document.getElementById('saveAsBtn');
     const stopScriptBtn = document.getElementById('stopScriptBtn');
 
-    folderPath1.textContent = '请选择文件夹路径';
+    folderPath1.textContent = FOLDER_PATH_PLACEHOLDER;
+    syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+    syncFileListVisualRows(fileList1, 0);
     startAnalysisBtn.disabled = true;
     openResultsBtn.disabled = true;
     saveAsBtn.disabled = true;
@@ -105,6 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.path) {
                 const folderPathElement = document.getElementById(`folderPath${result.playerId}`);
                 folderPathElement.textContent = result.path;
+                if (result.playerId === 1 || result.playerId === '1') {
+                    syncFolderPathVisualState(folderPathElement, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+                }
                 logMessage(`播放器${result.playerId}设置文件夹: ${result.path}`);
                 loadFilesFromFolder(result.path, playerId);
                 useFolderPathAsArg(result.path);
@@ -144,7 +173,8 @@ document.addEventListener('DOMContentLoaded', () => {
             fileListElement.innerHTML = '';
 
             if (files.length === 0) {
-                fileListElement.innerHTML = '<div>没有找到视频文件</div>';
+                fileListElement.innerHTML = '<div class="file-empty-state">没有找到视频文件</div>';
+                syncFileListVisualRows(fileListElement, 0);
                 return;
             }
 
@@ -161,8 +191,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 fileListElement.appendChild(fileItem);
             });
+
+            syncFileListVisualRows(fileListElement, files.length);
         }).catch(err => {
             logMessage(`加载文件列表出错: ${err.message}`);
+            syncFileListVisualRows(fileListElement, 0);
         });
     }
 
@@ -190,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (type === 'preprocess') {
             const sourcePath = folderPath1.textContent;
-            if (!sourcePath || sourcePath === '请选择文件夹路径') {
+            if (!sourcePath || sourcePath === FOLDER_PATH_PLACEHOLDER) {
                 logMessage('<span class="error-message">错误: 请先选择源文件夹</span>');
                 return;
             }
@@ -213,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             scriptModel = 'track';
             const scriptArgsInput = document.getElementById('scriptArgs');
             argsString = scriptArgsInput ? scriptArgsInput.value.trim() : '';
-            if (!argsString && folderPath1.textContent && folderPath1.textContent !== '请选择文件夹路径') {
+            if (!argsString && folderPath1.textContent && folderPath1.textContent !== FOLDER_PATH_PLACEHOLDER) {
                 argsString = `--vd ${folderPath1.textContent} --sd ${folderPath1.textContent}_output`;
             }
             startBtn = document.getElementById('startDetectionBtn');
@@ -357,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (scriptType === 'preprocess' && preprocessFolderPath && exitCode === 0) {
                         folderPath1.textContent = preprocessFolderPath;
+                        syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
                         loadFilesFromFolder(preprocessFolderPath, 1);
                         logMessage(`输出: 预处理完成，文件浏览区域已更新为: ${preprocessFolderPath}`);
                     }

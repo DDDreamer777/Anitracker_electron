@@ -8,7 +8,7 @@
 <body class="software-page">
     <div class="top-left-actions">
         <!-- Back Button -->
-        <button class="back-button" onclick="window.location.href='home.html'"> &lt; 返回主界面</button>
+        <button class="back-button" onclick="window.location.href='home.html'"> &lt </button>
 
         <div class="help-hint" aria-label="检测流程指引">
             <button
@@ -49,12 +49,21 @@
         <div class="right-panel">
             <!-- 文件浏览器区域 -->
             <div class="file-browser">
-                <div class="folder-path-row">
-                    <span class="folder-label">当前目录：</span>
+                <div class="file-browser-header">
+                    <div class="folder-meta">
+                        <span class="folder-label">
+                            <span class="folder-label-dot" aria-hidden="true"></span>
+                            当前视频目录
+                        </span>
+                        <span class="folder-source-tag">本地目录</span>
+                    </div>
+                    <button class="folder-select-btn" onclick="selectFolder(1)">选择文件夹</button>
+                </div>
+                <div id="folderPathShell1" class="folder-path-shell is-empty">
                     <div id="folderPath1" class="folder-path"></div>
                 </div>
+                <div class="file-browser-divider" role="separator"></div>
                 <div id="fileList1" class="file-list"></div>
-                <button onclick="selectFolder(1)">选择文件夹</button>
             </div>
 
             <!-- Python控制区域 -->
