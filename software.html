@@ -5,9 +5,36 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 
-<body>
-    <!-- Back Button -->
-    <button class="back-button" onclick="window.location.href='home.html'"> &lt; 返回主界面</button>
+<body class="software-page">
+    <div class="top-left-actions">
+        <!-- Back Button -->
+        <button class="back-button" onclick="window.location.href='home.html'"> &lt; 返回主界面</button>
+
+        <div class="help-hint" aria-label="检测流程指引">
+            <button
+                class="help-button"
+                type="button"
+                aria-label="显示检测操作指引"
+                aria-describedby="operationGuideTooltip"
+            >
+                <svg class="help-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 4.4a5.84 5.84 0 0 0-5.85 5.84.95.95 0 0 0 1.9 0A3.95 3.95 0 1 1 12 14.2a.95.95 0 0 0-.95.95v1.65a.95.95 0 1 0 1.9 0v-.82a5.84 5.84 0 0 0-.95-11.58Z" />
+                    <circle cx="12" cy="20" r="1.2" />
+                </svg>
+            </button>
+            <div id="operationGuideTooltip" class="guide-tooltip" role="tooltip">
+                <h4>流程指引</h4>
+                <ul class="guide-steps">
+                    <li><span class="guide-step-index">01</span><span>点击“选择文件夹”，指定到待处理的视频文件夹</span></li>
+                    <li><span class="guide-step-index">02</span><span>点击预处理，选择输出文件夹</span></li>
+                    <li><span class="guide-step-index">03</span><span>预处理完成后，重新点击右上角选择文件夹，将路径指定到包含处理后视频的文件夹</span></li>
+                    <li><span class="guide-step-index">04</span><span>点击“启动检测”，等待2-3min，观察日志中的进度信息</span></li>
+                    <li><span class="guide-step-index">05</span><span>检测完成后执行“启动分析”生成统计结果</span></li>
+                    <li><span class="guide-step-index">06</span><span>使用“打开分析结果目录”或“分析结果另存为”导出结果</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
     <div class="grid-container">
         <!-- 左侧视频播放器 -->

@@ -276,6 +276,179 @@ button:disabled {
     padding: 8px 15px;
 }
 
+.software-page .top-left-actions {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.software-page .back-button {
+    position: static;
+    margin: 0;
+}
+
+.software-page .help-hint {
+    --guide-bg: #252526;
+    --guide-bg-soft: #2c2c2d;
+    --guide-border: #3c3f44;
+    --guide-text-main: #d4d4d4;
+    --guide-text-sub: #9da3aa;
+    --guide-chip-bg: #33363b;
+    --guide-chip-border: #4b4f56;
+    --guide-focus-ring: rgba(197, 202, 210, 0.26);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.software-page .help-hint::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 100%;
+    width: 100%;
+    height: 10px;
+}
+
+.software-page .help-button {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #616161;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #505050 0%, #474747 100%);
+    color: #d5d5d5;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 140ms ease, border-color 140ms ease, box-shadow 160ms ease, background-color 140ms ease;
+    cursor: help;
+    opacity: 0.88;
+}
+
+.software-page .help-button-icon {
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
+}
+
+.software-page .help-button:hover {
+    border-color: #767676;
+    background: linear-gradient(180deg, #565656 0%, #4b4b4b 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+    opacity: 0.96;
+}
+
+.software-page .help-button:focus-visible {
+    outline: 2px solid #c9c9c9;
+    outline-offset: 2px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 4px var(--guide-focus-ring);
+    opacity: 1;
+}
+
+.software-page .guide-tooltip {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: min(390px, calc(100vw - 24px));
+    padding: 13px 14px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--guide-border);
+    background: linear-gradient(180deg, var(--guide-bg-soft) 0%, var(--guide-bg) 100%);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.34);
+    color: var(--guide-text-main);
+    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 140ms ease, transform 150ms ease, visibility 140ms ease;
+}
+
+.software-page .guide-tooltip::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 16px;
+    width: 10px;
+    height: 10px;
+    border-top: 1px solid var(--guide-border);
+    border-left: 1px solid var(--guide-border);
+    background: var(--guide-bg-soft);
+    transform: rotate(45deg);
+}
+
+.software-page .guide-tooltip h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #dddddd;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #3b3e43;
+}
+
+.software-page .guide-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 7px;
+}
+
+.software-page .guide-steps li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    align-items: start;
+    column-gap: 8px;
+}
+
+.software-page .guide-step-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin-top: 0;
+    border-radius: 999px;
+    border: 1px solid var(--guide-chip-border);
+    background: var(--guide-chip-bg);
+    color: #cfd3d8;
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-family: "Segoe UI", sans-serif;
+}
+
+.software-page .guide-steps li span:last-child {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #cfd3d8;
+    padding-top: 1px;
+}
+
+.software-page .help-hint:hover .guide-tooltip,
+.software-page .help-hint:focus-within .guide-tooltip {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .software-page .help-button,
+    .software-page .guide-tooltip {
+        transition: none;
+    }
+}
+
 .main-entry-button {
     padding: 12px 32px;
     font-size: 16px;
