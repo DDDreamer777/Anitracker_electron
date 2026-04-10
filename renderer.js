@@ -91,6 +91,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const openResultsBtn = document.getElementById('openResultsBtn');
     const saveAsBtn = document.getElementById('saveAsBtn');
     const stopScriptBtn = document.getElementById('stopScriptBtn');
+    const toolDrawerToggleBtn = document.getElementById('toolDrawerToggleBtn');
+    const toolDrawerPanel = document.getElementById('toolDrawerPanel');
+    const toolboxHint = toolDrawerToggleBtn ? toolDrawerToggleBtn.closest('.toolbox-hint') : null;
+
+    function setToolDrawerOpen(isOpen) {
+        if (!toolboxHint || !toolDrawerToggleBtn || !toolDrawerPanel) {
+            return;
+        }
+
+        toolboxHint.classList.toggle('is-open', isOpen);
+        toolDrawerToggleBtn.setAttribute('aria-expanded', String(isOpen));
+        toolDrawerPanel.setAttribute('aria-hidden', String(!isOpen));
+    }
+
+    function syncToolDrawerButtonWidth() {
+        if (!toolDrawerPanel) {
+            return;
+        }
+
+        const drawerButtons = Array.from(toolDrawerPanel.querySelectorAll('.tool-drawer-btn'));
+        if (drawerButtons.length === 0) {
+            return;
+        }
+
+        const maxCharCount = drawerButtons.reduce((maxLen, button) => {
+            const text = button.textContent ? button.textContent.trim() : '';
+            return Math.max(maxLen, text.length);
+        }, 0);
+
+        const targetWidth = Math.max(68, Math.min(124, (maxCharCount * 13) + 12));
+        toolDrawerPanel.style.setProperty('--tool-drawer-btn-width', `${targetWidth}px`);
+    }
+
+    if (toolboxHint && toolDrawerToggleBtn && toolDrawerPanel) {
+        syncToolDrawerButtonWidth();
+
+        toolDrawerToggleBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const isOpen = toolboxHint.classList.contains('is-open');
+            setToolDrawerOpen(!isOpen);
+        });
+
+        toolDrawerPanel.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        document.addEventListener('click', (event) => {
+            if (toolboxHint.classList.contains('is-open') && !toolboxHint.contains(event.target)) {
+                setToolDrawerOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && toolboxHint.classList.contains('is-open')) {
+                setToolDrawerOpen(false);
+            }
+        });
+
+        window.addEventListener('resize', syncToolDrawerButtonWidth);
+    }
 
     folderPath1.textContent = FOLDER_PATH_PLACEHOLDER;
     syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
