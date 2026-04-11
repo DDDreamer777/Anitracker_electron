@@ -7,7 +7,11 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="hardware-route-page">
-    <button class="back-button" onclick="window.location.href='home.html'"> &lt </button>
+    <button class="back-button" type="button" aria-label="返回主界面" onclick="window.location.href='home.html'">
+        <svg class="back-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M14.71 5.29a1 1 0 0 1 0 1.42L10.42 11l4.29 4.29a1 1 0 1 1-1.42 1.42l-5-5a1 1 0 0 1 0-1.42l5-5a1 1 0 0 1 1.42 0Z" />
+        </svg>
+    </button>
 
     <main class="hardware-route-shell">
         <section class="hardware-route-card" role="status" aria-live="polite" aria-atomic="true">

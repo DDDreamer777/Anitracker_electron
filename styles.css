@@ -159,12 +159,17 @@ video {
 }
 
 .file-browser {
-    flex: 1;
+    flex: 0 0 auto;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     min-height: 0;
     padding: 12px;
+}
+
+.python-controls {
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .file-browser-header {
@@ -252,6 +257,24 @@ video {
 .folder-path-shell.is-empty .folder-path {
     color: #969696;
     font-style: italic;
+}
+
+.file-list-region {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    max-height: calc((var(--file-row-height, 32px) * 4) + 36px);
+    opacity: 1;
+    transform: translateY(0);
+    transition: max-height 180ms ease, opacity 140ms ease, transform 180ms ease;
+}
+
+.file-list-region.is-collapsed {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
 }
 
 .file-browser-divider {
@@ -458,6 +481,14 @@ button:disabled {
     z-index: 1000;
 }
 
+.back-button-icon {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+    flex-shrink: 0;
+    transform: translateX(-0.5px);
+}
+
 .software-page .top-left-actions {
     position: absolute;
     top: 10px;
@@ -548,10 +579,20 @@ button:disabled {
     fill: currentColor;
 }
 
+.software-page .back-button-icon {
+    width: 16px;
+    height: 16px;
+}
+
 .software-page .toolbox-button-icon {
     width: 16px;
     height: 16px;
-    fill: currentColor;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: translateX(-1px) translateY(0.55px);
 }
 
 .software-page .toolbox-button {

@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const outputDiv = document.getElementById('output');
     const fileList1 = document.getElementById('fileList1');
     const fileList2 = document.getElementById('fileList2');
+    const fileListRegion1 = document.getElementById('fileListRegion1');
     const folderPath1 = document.getElementById('folderPath1');
     const folderPath2 = document.getElementById('folderPath2');
     const folderPathShell1 = document.getElementById('folderPathShell1');
@@ -11,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function syncFolderPathVisualState(pathElement, shellElement, placeholderText) {
         if (!pathElement || !shellElement) {
-            return;
+            return false;
         }
 
         const value = pathElement.textContent ? pathElement.textContent.trim() : '';
@@ -19,6 +20,16 @@ document.addEventListener('DOMContentLoaded', () => {
         shellElement.classList.toggle('is-empty', isEmpty);
         shellElement.classList.toggle('is-active', !isEmpty);
         pathElement.title = isEmpty ? placeholderText : value;
+        return !isEmpty;
+    }
+
+    function syncFileListRegionVisibility(regionElement, isVisible) {
+        if (!regionElement) {
+            return;
+        }
+
+        regionElement.classList.toggle('is-collapsed', !isVisible);
+        regionElement.setAttribute('aria-hidden', String(!isVisible));
     }
 
     function syncFileListVisualRows(fileListElement, itemCount) {
@@ -153,7 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     folderPath1.textContent = FOLDER_PATH_PLACEHOLDER;
-    syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+    const hasInitialFolder = syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+    syncFileListRegionVisibility(fileListRegion1, hasInitialFolder);
     syncFileListVisualRows(fileList1, 0);
     startAnalysisBtn.disabled = true;
     openResultsBtn.disabled = true;
@@ -192,7 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const folderPathElement = document.getElementById(`folderPath${result.playerId}`);
                 folderPathElement.textContent = result.path;
                 if (result.playerId === 1 || result.playerId === '1') {
-                    syncFolderPathVisualState(folderPathElement, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+                    const hasFolderPath = syncFolderPathVisualState(folderPathElement, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+                    syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
                 }
                 logMessage(`播放器${result.playerId}设置文件夹: ${result.path}`);
                 loadFilesFromFolder(result.path, playerId);
@@ -450,7 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (scriptType === 'preprocess' && preprocessFolderPath && exitCode === 0) {
                         folderPath1.textContent = preprocessFolderPath;
-                        syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+                        const hasFolderPath = syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+                        syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
                         loadFilesFromFolder(preprocessFolderPath, 1);
                         logMessage(`输出: 预处理完成，文件浏览区域已更新为: ${preprocessFolderPath}`);
                     }
