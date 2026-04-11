@@ -1,4 +1,6 @@
 dist/
+docs/
+tests/
 node_modules/
 *.log
 *.tmp

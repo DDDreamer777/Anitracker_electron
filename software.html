@@ -7,7 +7,6 @@
 
 <body class="software-page">
     <div class="top-left-actions">
-        <!-- Back Button -->
         <button class="back-button" type="button" aria-label="返回主界面" onclick="window.location.href='home.html'">
             <svg class="back-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M14.71 5.29a1 1 0 0 1 0 1.42L10.42 11l4.29 4.29a1 1 0 1 1-1.42 1.42l-5-5a1 1 0 0 1 0-1.42l5-5a1 1 0 0 1 1.42 0Z" />
@@ -27,14 +26,14 @@
                 </svg>
             </button>
             <div id="operationGuideTooltip" class="guide-tooltip" role="tooltip">
-                <h4>流程指引</h4>
+                <h4>检测流程</h4>
                 <ul class="guide-steps">
-                    <li><span class="guide-step-index">01</span><span>点击“选择文件夹”，指定到待处理的视频文件夹</span></li>
-                    <li><span class="guide-step-index">02</span><span>点击预处理，选择输出文件夹</span></li>
-                    <li><span class="guide-step-index">03</span><span>预处理完成后，重新点击右上角选择文件夹，将路径指定到包含处理后视频的文件夹</span></li>
-                    <li><span class="guide-step-index">04</span><span>点击“启动检测”，等待2-3min，观察日志中的进度信息</span></li>
-                    <li><span class="guide-step-index">05</span><span>检测完成后执行“启动分析”生成统计结果</span></li>
-                    <li><span class="guide-step-index">06</span><span>使用“打开分析结果目录”或“分析结果另存为”导出结果</span></li>
+                    <li><span class="guide-step-index">01</span><span>先选择待处理视频，再选择右侧输入目录。</span></li>
+                    <li><span class="guide-step-index">02</span><span>按阶段进入预处理、检测追踪或智能分析。</span></li>
+                    <li><span class="guide-step-index">03</span><span>预处理完成后，文件浏览区会自动切到新的输出目录。</span></li>
+                    <li><span class="guide-step-index">04</span><span>检测追踪运行时，可在阶段面板中查看状态并终止任务。</span></li>
+                    <li><span class="guide-step-index">05</span><span>智能分析完成后，可使用左上角工具抽屉导出结果。</span></li>
+                    <li><span class="guide-step-index">06</span><span>底部日志区会持续记录执行进度与错误反馈。</span></li>
                 </ul>
             </div>
         </div>
@@ -49,7 +48,7 @@
                 aria-controls="toolDrawerPanel"
             >
                 <svg class="toolbox-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M14.7 6.3a1 1 0 0 0 1.4 1.4l3.4-3.4a5 5 0 0 1-6.5 6.5l-6.4 6.4a2 2 0 1 1-2.8-2.8l6.4-6.4a5 5 0 0 1 6.5-6.5Z" transform="matrix(0 -1 -1 0 24 24)" />
+                    <path d="M21.72 12.58a6.27 6.27 0 0 1-7.79.69l-8.6 8.6a2.2 2.2 0 0 1-3.11-3.11l8.61-8.6a6.27 6.27 0 0 1 6.95-10.02l-2.73 2.73a2.17 2.17 0 0 0 3.07 3.07l2.73-2.73a6.27 6.27 0 0 1 .87 9.37z" />
                 </svg>
             </button>
 
@@ -63,25 +62,22 @@
     </div>
 
     <div class="grid-container">
-        <!-- 左侧视频播放器 -->
         <div class="video-player">
             <video id="video1" controls></video>
             <div class="controls">
                 <button onclick="selectVideo(1)">选择视频</button>
             </div>
         </div>
-        
-        <!-- 右侧控制面板 -->
+
         <div class="right-panel">
-            <!-- 文件浏览器区域 -->
             <div class="file-browser">
                 <div class="file-browser-header">
                     <div class="folder-meta">
                         <span class="folder-label">
                             <span class="folder-label-dot" aria-hidden="true"></span>
-                            当前视频目录
+                            当前工作目录
                         </span>
-                        <span class="folder-source-tag">本地目录</span>
+                        <span class="folder-source-tag">输入源</span>
                     </div>
                     <button class="folder-select-btn" onclick="selectFolder(1)">选择文件夹</button>
                 </div>
@@ -94,58 +90,58 @@
                 </div>
             </div>
 
-            <!-- Python控制区域 -->
-            <div class="python-controls">
-                <h3>智析</h3>
-                 <div class="btn-group">
-                    <button id="startPreprocessBtn" onclick="executePythonScript('preprocess')">预处理</button>
-                    <button id="stopScriptBtn" onclick="stopPythonScript()" disabled>终止当前进程</button>
-                    <button id="startDetectionBtn" onclick="executePythonScript('detection')">启动检测</button>
-                    <button id="startAnalysisBtn" onclick="executePythonScript('analysis')">启动分析</button>
-
-                    <input type="hidden" id="scriptArgs" value="">
-                    <input type="hidden" id="analysisScriptArgs" value="">
+            <div class="python-controls stage-workspace" id="stageWorkspace" data-stage-mode="overview">
+                <div class="stage-workspace-header">
+                    <div class="stage-workspace-copy">
+                        <h3>智析</h3>
+                    </div>
+                    <div id="stageGlobalStatus" class="stage-global-status" data-tone="idle">
+                        <span class="stage-global-status-label">当前运行</span>
+                        <span class="stage-global-status-value">无</span>
+                    </div>
                 </div>
-            </div>
 
+                <div class="stage-workspace-body">
+                    <div id="stageRail" class="stage-rail" aria-label="阶段选择器">
+                        <button class="stage-selector-btn" type="button" data-stage-select="preprocess">
+                            <span class="stage-selector-main">预处理</span>
+                            <span class="stage-selector-meta">待选择输入</span>
+                        </button>
+                        <button class="stage-selector-btn" type="button" data-stage-select="detection">
+                            <span class="stage-selector-main">检测追踪</span>
+                            <span class="stage-selector-meta">待选择输入</span>
+                        </button>
+                        <button class="stage-selector-btn" type="button" data-stage-select="analysis">
+                            <span class="stage-selector-main">智能分析</span>
+                            <span class="stage-selector-meta">待选择输入</span>
+                        </button>
+                    </div>
+
+                    <section id="stageDetailPanel" class="stage-detail-panel" aria-live="polite" hidden>
+                        <button id="stageBackBtn" class="stage-back-btn" type="button">&larr; 返回阶段选择</button>
+                        <p id="stageDetailDescription" class="stage-detail-description">展开后会在这里显示该阶段的状态、依赖与操作。</p>
+
+                        <div id="stageMetaList" class="stage-meta-list"></div>
+
+                        <div class="stage-action-row">
+                            <button id="startPreprocessBtn" class="stage-action-btn" onclick="executePythonScript('preprocess')">开始预处理</button>
+                            <button id="startDetectionBtn" class="stage-action-btn" onclick="executePythonScript('detection')">启动检测</button>
+                            <button id="startAnalysisBtn" class="stage-action-btn" onclick="executePythonScript('analysis')">启动分析</button>
+                            <button id="stopScriptBtn" class="stage-action-btn stage-action-btn-danger" onclick="stopPythonScript()" disabled>终止当前进程</button>
+                        </div>
+                    </section>
+                </div>
+
+                <input type="hidden" id="scriptArgs" value="">
+                <input type="hidden" id="analysisScriptArgs" value="">
+            </div>
         </div>
-            
-        
-        <!-- 输出栏 -->
+
         <div id="output"></div>
     </div>
 
+    <script src="stage-controls.js"></script>
     <script src="renderer.js"></script>
-    <script>
-        // 新增函数：将文件夹路径用作参数
-        // function useFolderPathAsArg() {
-        //     const folderPath = document.getElementById('folderPath1').textContent;
-        //     if (folderPath) {
-        //         const scriptArgsInput = document.getElementById('scriptArgs');
-        //         // 将路径格式化为 --vd "路径" 的形式
-        //         scriptArgsInput.value = `--vd ${folderPath} --sd ${folderPath}_output`;
-        //         logMessage(`参数已设置为: ${scriptArgsInput.value}`);
-        //     } else {
-        //         alert('请先选择一个文件夹');
-        //     }
-        // }
-
-        function startServer() {
-            const scriptName = document.getElementById('serverScript').value.trim();
-            const port = parseInt(document.getElementById('serverPort').value) || 5000;
-            
-            if (!scriptName) {
-                alert('请输入服务器脚本名称');
-                return;
-            }
-            
-            window.startPythonServer(scriptName, port);
-        }
-        
-        function stopServer() {
-            window.stopPythonServer();
-        }
-    </script>
+    <script src="stage-workspace.js"></script>
 </body>
-
 </html>

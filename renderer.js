@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const safeCount = Number.isFinite(itemCount) ? itemCount : 0;
-        const visibleRows = Math.max(1, Math.min(4, safeCount));
+        const visibleRows = Math.max(1, Math.min(2, safeCount));
         fileListElement.style.setProperty('--file-list-visible-rows', String(visibleRows));
     }
 
