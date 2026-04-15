@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const stageControlApi = window.StageControls;
-    const electronAPI = window.electronAPI;
+    const runtimeBridge = window.stageRuntimeBridge;
     const stageWorkspace = document.getElementById('stageWorkspace');
-    const folderPath1 = document.getElementById('folderPath1');
     const startPreprocessBtn = document.getElementById('startPreprocessBtn');
     const startDetectionBtn = document.getElementById('startDetectionBtn');
     const startAnalysisBtn = document.getElementById('startAnalysisBtn');
@@ -14,14 +13,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const stageDetailDescription = document.getElementById('stageDetailDescription');
     const stageButtons = Array.from(document.querySelectorAll('[data-stage-select]'));
 
-    if (!stageControlApi || !electronAPI || !stageWorkspace || !folderPath1) {
+    if (!stageControlApi || !stageWorkspace) {
         return;
     }
 
-    const stageCompletion = {
-        preprocess: false,
-        detection: false,
-        analysis: false
+    let runtimeSnapshot = {
+        sourcePath: '',
+        preprocessFolderPath: '',
+        activeScriptType: null,
+        stageCompletion: {
+            preprocess: false,
+            detection: false,
+            analysis: false
+        }
     };
 
     const actionButtons = {
@@ -31,10 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
         stopScriptBtn
     };
 
-    const executionStageMap = new Map();
     let selectedStage = null;
-    let activeScriptType = null;
-    let preprocessFolderPath = '';
+    let unsubscribeRuntime = null;
 
     function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, (char) => ({
@@ -46,48 +48,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }[char]));
     }
 
-    function getCurrentSourcePath() {
-        const value = folderPath1.textContent ? folderPath1.textContent.trim() : '';
-        return value && !value.includes('请选择') ? value : '';
-    }
-
-    function inferStageFromRunPayload(payload) {
-        if (!payload || !Array.isArray(payload.args) || payload.args.length === 0) {
-            return null;
+    function normalizeRuntimeSnapshot(snapshot) {
+        if (!snapshot || typeof snapshot !== 'object') {
+            return {
+                sourcePath: '',
+                preprocessFolderPath: '',
+                activeScriptType: null,
+                stageCompletion: {
+                    preprocess: false,
+                    detection: false,
+                    analysis: false
+                }
+            };
         }
 
-        if (payload.args[0] === 'preprocess') {
-            return 'preprocess';
-        }
-
-        if (payload.args[0] === 'track') {
-            return 'detection';
-        }
-
-        if (payload.args[0] === 'anlys') {
-            return 'analysis';
-        }
-
-        return null;
-    }
-
-    function resetDownstreamCompletion(stageKey) {
-        if (stageKey === 'preprocess') {
-            stageCompletion.preprocess = false;
-            stageCompletion.detection = false;
-            stageCompletion.analysis = false;
-            return;
-        }
-
-        if (stageKey === 'detection') {
-            stageCompletion.detection = false;
-            stageCompletion.analysis = false;
-            return;
-        }
-
-        if (stageKey === 'analysis') {
-            stageCompletion.analysis = false;
-        }
+        const completion = snapshot.stageCompletion || {};
+        return {
+            sourcePath: typeof snapshot.sourcePath === 'string' ? snapshot.sourcePath : '',
+            preprocessFolderPath: typeof snapshot.preprocessFolderPath === 'string' ? snapshot.preprocessFolderPath : '',
+            activeScriptType: typeof snapshot.activeScriptType === 'string' ? snapshot.activeScriptType : null,
+            stageCompletion: {
+                preprocess: Boolean(completion.preprocess),
+                detection: Boolean(completion.detection),
+                analysis: Boolean(completion.analysis)
+            }
+        };
     }
 
     function setSelectedStage(stageKey) {
@@ -110,13 +95,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderStageWorkspace() {
         const model = stageControlApi.buildStageWorkspaceModel({
             selectedStage,
-            activeScriptType,
-            sourcePath: getCurrentSourcePath(),
-            preprocessFolderPath,
-            stageCompletion
+            activeScriptType: runtimeSnapshot.activeScriptType,
+            sourcePath: runtimeSnapshot.sourcePath,
+            preprocessFolderPath: runtimeSnapshot.preprocessFolderPath,
+            stageCompletion: runtimeSnapshot.stageCompletion
         });
 
         stageWorkspace.dataset.stageMode = model.mode;
+        stageWorkspace.dataset.runningStage = runtimeSnapshot.activeScriptType || '';
 
         if (stageGlobalStatus) {
             stageGlobalStatus.dataset.tone = model.globalStatus.tone;
@@ -185,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const primaryButton = actionButtons[detail.primaryAction.id];
         if (primaryButton) {
             primaryButton.classList.remove('is-hidden');
+            primaryButton.disabled = Boolean(detail.primaryAction.disabled);
         }
 
         if (stopScriptBtn) {
@@ -192,88 +179,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const originalSelectFolder = electronAPI.selectFolder.bind(electronAPI);
-    electronAPI.selectFolder = async (payload) => {
-        const result = await originalSelectFolder(payload);
-
-        if (payload && payload.playerId === 'preprocess' && result && result.path) {
-            preprocessFolderPath = result.path;
+    function applyRuntimeSnapshot(snapshot) {
+        runtimeSnapshot = normalizeRuntimeSnapshot(snapshot);
+        if (!selectedStage && runtimeSnapshot.activeScriptType) {
+            selectedStage = runtimeSnapshot.activeScriptType;
         }
-
-        if (payload && (payload.playerId === 1 || payload.playerId === '1') && result && result.path) {
-            stageCompletion.detection = false;
-            stageCompletion.analysis = false;
-
-            if (!preprocessFolderPath || result.path !== preprocessFolderPath) {
-                stageCompletion.preprocess = false;
-            }
-        }
-
         renderStageWorkspace();
-        return result;
-    };
+    }
 
-    const originalRunPython = electronAPI.runPython.bind(electronAPI);
-    electronAPI.runPython = async (payload) => {
-        const stageKey = inferStageFromRunPayload(payload);
-        if (stageKey) {
-            resetDownstreamCompletion(stageKey);
-        }
-
-        renderStageWorkspace();
-
-        const result = await originalRunPython(payload);
-        if (result && result.success && result.executionId && stageKey) {
-            executionStageMap.set(result.executionId, stageKey);
-            activeScriptType = stageKey;
-
-            if (!selectedStage) {
-                selectedStage = stageKey;
-            }
-        }
-
-        renderStageWorkspace();
-        return result;
-    };
-
-    electronAPI.onPythonOutput((data) => {
-        const stageKey = executionStageMap.get(data.executionId);
-        if (!stageKey) {
-            return;
-        }
-
-        if (data.type === 'close') {
-            if (data.code === 0) {
-                stageCompletion[stageKey] = true;
-            }
-
-            activeScriptType = null;
-            executionStageMap.delete(data.executionId);
-        }
-
-        if (data.type === 'error') {
-            activeScriptType = null;
-            executionStageMap.delete(data.executionId);
-        }
-
-        renderStageWorkspace();
-    });
-
-    if (typeof MutationObserver !== 'undefined') {
-        const folderObserver = new MutationObserver(() => {
-            renderStageWorkspace();
+    if (runtimeBridge && typeof runtimeBridge.subscribe === 'function') {
+        unsubscribeRuntime = runtimeBridge.subscribe((snapshot) => {
+            applyRuntimeSnapshot(snapshot);
         });
+    }
 
-        folderObserver.observe(folderPath1, {
-            childList: true,
-            characterData: true,
-            subtree: true
-        });
+    if (runtimeBridge && typeof runtimeBridge.getSnapshot === 'function') {
+        applyRuntimeSnapshot(runtimeBridge.getSnapshot());
     }
 
     window.addEventListener('resize', () => {
         renderStageWorkspace();
     });
+
+    window.addEventListener('beforeunload', () => {
+        if (typeof unsubscribeRuntime === 'function') {
+            unsubscribeRuntime();
+        }
+    }, { once: true });
 
     stageButtons.forEach((button) => {
         button.addEventListener('click', () => {

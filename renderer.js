@@ -172,17 +172,200 @@ document.addEventListener('DOMContentLoaded', () => {
     saveAsBtn.disabled = true;
 
     let preprocessFolderPath = '';
+    const stageCompletion = {
+        preprocess: false,
+        detection: false,
+        analysis: false
+    };
     const runningScriptIds = {
         preprocess: null,
         detection: null,
         analysis: null
     };
+    const executionStageMap = new Map();
     let activeScriptType = null;
     const scriptLabelMap = {
         preprocess: '预处理',
         detection: '检测',
         analysis: '分析'
     };
+    const runtimeSubscribers = new Set();
+    let unsubscribeRuntimeState = null;
+
+    function getCurrentSourcePath() {
+        const value = folderPath1.textContent ? folderPath1.textContent.trim() : '';
+        return value && value !== FOLDER_PATH_PLACEHOLDER ? value : '';
+    }
+
+    function buildRuntimeSnapshot() {
+        return {
+            sourcePath: getCurrentSourcePath(),
+            preprocessFolderPath,
+            activeScriptType,
+            runningExecutions: {
+                preprocess: runningScriptIds.preprocess,
+                detection: runningScriptIds.detection,
+                analysis: runningScriptIds.analysis
+            },
+            stageCompletion: { ...stageCompletion }
+        };
+    }
+
+    function normalizeRuntimeSnapshot(snapshot) {
+        const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
+        const completion = source.stageCompletion && typeof source.stageCompletion === 'object'
+            ? source.stageCompletion
+            : {};
+        const runningExecutions = source.runningExecutions && typeof source.runningExecutions === 'object'
+            ? source.runningExecutions
+            : {};
+
+        return {
+            sourcePath: typeof source.sourcePath === 'string' ? source.sourcePath : '',
+            preprocessFolderPath: typeof source.preprocessFolderPath === 'string' ? source.preprocessFolderPath : '',
+            activeScriptType: (source.activeScriptType === 'preprocess' || source.activeScriptType === 'detection' || source.activeScriptType === 'analysis')
+                ? source.activeScriptType
+                : null,
+            runningExecutions: {
+                preprocess: typeof runningExecutions.preprocess === 'string' ? runningExecutions.preprocess : null,
+                detection: typeof runningExecutions.detection === 'string' ? runningExecutions.detection : null,
+                analysis: typeof runningExecutions.analysis === 'string' ? runningExecutions.analysis : null
+            },
+            stageCompletion: {
+                preprocess: Boolean(completion.preprocess),
+                detection: Boolean(completion.detection),
+                analysis: Boolean(completion.analysis)
+            }
+        };
+    }
+
+    function syncRuntimeStateToMain(snapshot) {
+        if (!window.electronAPI || typeof window.electronAPI.updateRuntimeState !== 'function') {
+            return;
+        }
+
+        window.electronAPI.updateRuntimeState(snapshot).catch((error) => {
+            console.error('同步运行状态到主进程失败:', error);
+        });
+    }
+
+    function publishRuntimeState(options = {}) {
+        const snapshot = buildRuntimeSnapshot();
+        runtimeSubscribers.forEach((listener) => {
+            try {
+                listener(snapshot);
+            } catch (error) {
+                console.error('运行状态订阅回调执行失败:', error);
+            }
+        });
+
+        if (!options.skipMainSync) {
+            syncRuntimeStateToMain(snapshot);
+        }
+    }
+
+    function subscribeStageRuntimeState(listener) {
+        if (typeof listener !== 'function') {
+            return () => {};
+        }
+
+        runtimeSubscribers.add(listener);
+        listener(buildRuntimeSnapshot());
+
+        return () => {
+            runtimeSubscribers.delete(listener);
+        };
+    }
+
+    function resetDownstreamCompletion(stageKey) {
+        if (stageKey === 'preprocess') {
+            stageCompletion.preprocess = false;
+            stageCompletion.detection = false;
+            stageCompletion.analysis = false;
+            return;
+        }
+
+        if (stageKey === 'detection') {
+            stageCompletion.detection = false;
+            stageCompletion.analysis = false;
+            return;
+        }
+
+        if (stageKey === 'analysis') {
+            stageCompletion.analysis = false;
+        }
+    }
+
+    function applyActiveScriptUi(type) {
+        if (type) {
+            stopScriptBtn.disabled = false;
+            stopScriptBtn.textContent = `终止${scriptLabelMap[type]}进程`;
+        } else {
+            stopScriptBtn.disabled = true;
+            stopScriptBtn.textContent = '终止运行中的进程';
+        }
+    }
+
+    function applyRuntimeSnapshot(snapshot, options = {}) {
+        const normalized = normalizeRuntimeSnapshot(snapshot);
+
+        preprocessFolderPath = normalized.preprocessFolderPath;
+        activeScriptType = normalized.activeScriptType;
+        stageCompletion.preprocess = normalized.stageCompletion.preprocess;
+        stageCompletion.detection = normalized.stageCompletion.detection;
+        stageCompletion.analysis = normalized.stageCompletion.analysis;
+
+        runningScriptIds.preprocess = normalized.runningExecutions.preprocess;
+        runningScriptIds.detection = normalized.runningExecutions.detection;
+        runningScriptIds.analysis = normalized.runningExecutions.analysis;
+
+        applyActiveScriptUi(activeScriptType);
+
+        if (normalized.sourcePath) {
+            folderPath1.textContent = normalized.sourcePath;
+            const hasFolderPath = syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+            syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
+            useFolderPathAsArg(normalized.sourcePath, { silent: true });
+            loadFilesFromFolder(normalized.sourcePath, 1);
+        } else {
+            folderPath1.textContent = FOLDER_PATH_PLACEHOLDER;
+            const hasFolderPath = syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+            syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
+            fileList1.innerHTML = '';
+            syncFileListVisualRows(fileList1, 0);
+            if (startAnalysisBtn) startAnalysisBtn.disabled = true;
+            if (openResultsBtn) openResultsBtn.disabled = true;
+            if (saveAsBtn) saveAsBtn.disabled = true;
+        }
+
+        publishRuntimeState({ skipMainSync: Boolean(options.skipMainSync) });
+    }
+
+    async function hydrateRuntimeStateFromMain() {
+        if (!window.electronAPI || typeof window.electronAPI.getRuntimeState !== 'function') {
+            publishRuntimeState();
+            return;
+        }
+
+        try {
+            const state = await window.electronAPI.getRuntimeState();
+            applyRuntimeSnapshot(state, { skipMainSync: true });
+        } catch (error) {
+            console.error('获取主进程运行状态失败:', error);
+            publishRuntimeState();
+        }
+    }
+
+    window.stageRuntimeBridge = {
+        getSnapshot: buildRuntimeSnapshot,
+        subscribe: subscribeStageRuntimeState
+    };
+
+    if (window.electronAPI && typeof window.electronAPI.onRuntimeState === 'function') {
+        unsubscribeRuntimeState = window.electronAPI.onRuntimeState((snapshot) => {
+            applyRuntimeSnapshot(snapshot, { skipMainSync: true });
+        });
+    }
 
     window.selectVideo = (playerId) => {
         window.electronAPI.selectVideo({ playerId }).then(result => {
@@ -206,17 +389,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.playerId === 1 || result.playerId === '1') {
                     const hasFolderPath = syncFolderPathVisualState(folderPathElement, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
                     syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
+
+                    stageCompletion.detection = false;
+                    stageCompletion.analysis = false;
+                    if (!preprocessFolderPath || result.path !== preprocessFolderPath) {
+                        stageCompletion.preprocess = false;
+                    }
+
+                    useFolderPathAsArg(result.path);
+                    publishRuntimeState();
                 }
                 logMessage(`播放器${result.playerId}设置文件夹: ${result.path}`);
                 loadFilesFromFolder(result.path, playerId);
-                useFolderPathAsArg(result.path);
             }
         }).catch(err => {
             logMessage(`错误: ${err.message}`);
         });
     };
 
-    function useFolderPathAsArg(folderPath) {
+    function useFolderPathAsArg(folderPath, options = {}) {
         const scriptArgsInput = document.getElementById('scriptArgs');
         const analysisScriptArgsInput = document.getElementById('analysisScriptArgs');
 
@@ -231,7 +422,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 analysisScriptArgsInput.value = argString;
             }
 
-            logMessage(`参数已自动设置为: ${argString}`);
+            if (!options.silent) {
+                logMessage(`参数已自动设置为: ${argString}`);
+            }
 
             // 解锁行为学分析功能，无需先运行检测再进行分析
             if (startAnalysisBtn) startAnalysisBtn.disabled = false;
@@ -274,13 +467,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setActiveScript(type) {
         activeScriptType = type;
-        if (type) {
-            stopScriptBtn.disabled = false;
-            stopScriptBtn.textContent = `终止${scriptLabelMap[type]}进程`;
-        } else {
-            stopScriptBtn.disabled = true;
-            stopScriptBtn.textContent = '终止运行中的进程';
-        }
+        applyActiveScriptUi(type);
+
+        publishRuntimeState();
     }
 
     window.executePythonScript = async (type) => {
@@ -309,6 +498,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             preprocessFolderPath = result.path;
+            publishRuntimeState();
+
             scriptName = 'ZebrafishTool'; // 注意这里的脚本名称要和实际Python脚本对应
             scriptModel = 'preprocess';
             argsString = `--vd ${sourcePath} --sd ${preprocessFolderPath}`;
@@ -363,7 +554,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.electronAPI.runPython({ scriptName, args })
             .then(result => {
                 if (result.success) {
+                    resetDownstreamCompletion(type);
                     runningScriptIds[type] = result.executionId;
+                    executionStageMap.set(result.executionId, type);
                     logMessage(`脚本进程已启动, ID: ${result.executionId}`);
                     setActiveScript(type);
 
@@ -425,11 +618,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const { type, executionId, code } = data;
         const outputText = typeof data.data === 'string' ? data.data.trim() : '';
 
-        let scriptType = null;
-        for (const key in runningScriptIds) {
-            if (runningScriptIds[key] === executionId) {
-                scriptType = key;
-                break;
+        let scriptType = executionStageMap.get(executionId) || null;
+        if (!scriptType) {
+            for (const key in runningScriptIds) {
+                if (runningScriptIds[key] === executionId) {
+                    scriptType = key;
+                    break;
+                }
             }
         }
 
@@ -461,17 +656,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     const startBtn = document.getElementById(`start${btnSuffix}Btn`);
                     if (startBtn) startBtn.disabled = false;
 
+                    if (exitCode === 0) {
+                        stageCompletion[scriptType] = true;
+                    }
+
                     if (scriptType === 'preprocess' && preprocessFolderPath && exitCode === 0) {
                         folderPath1.textContent = preprocessFolderPath;
                         const hasFolderPath = syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
                         syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
                         loadFilesFromFolder(preprocessFolderPath, 1);
+                        useFolderPathAsArg(preprocessFolderPath);
+                        stageCompletion.detection = false;
+                        stageCompletion.analysis = false;
                         logMessage(`输出: 预处理完成，文件浏览区域已更新为: ${preprocessFolderPath}`);
                     }
 
                     runningScriptIds[scriptType] = null;
+                    executionStageMap.delete(executionId);
                     if (activeScriptType === scriptType) {
                         setActiveScript(null);
+                    } else {
+                        publishRuntimeState();
                     }
                 }
                 break;
@@ -483,8 +688,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const startBtn = document.getElementById(`start${btnSuffix}Btn`);
                     if (startBtn) startBtn.disabled = false;
                     runningScriptIds[scriptType] = null;
+                    executionStageMap.delete(executionId);
                     if (activeScriptType === scriptType) {
                         setActiveScript(null);
+                    } else {
+                        publishRuntimeState();
                     }
                 }
                 break;
@@ -580,6 +788,14 @@ document.addEventListener('DOMContentLoaded', () => {
     video1.addEventListener('pause', () => logMessage('播放器1暂停播放'));
     video2.addEventListener('play', () => logMessage('播放器2开始播放'));
     video2.addEventListener('pause', () => logMessage('播放器2暂停播放'));
+
+    window.addEventListener('beforeunload', () => {
+        if (typeof unsubscribeRuntimeState === 'function') {
+            unsubscribeRuntimeState();
+        }
+    }, { once: true });
+
+    hydrateRuntimeStateFromMain();
 
     logMessage('应用已启动，请选择视频文件或文件夹');
 });

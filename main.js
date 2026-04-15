@@ -3,6 +3,13 @@ const path = require('path')
 const fs = require('fs')
 const { spawn, exec  } = require('child_process')
 const iconv = require('iconv-lite')
+const {
+  createRuntimeState,
+  applyRuntimePatch,
+  inferStageFromArgs,
+  resetDownstreamCompletion,
+  cloneRuntimeState
+} = require('./runtime-state')
 
 // [HW-INTEGRATION v2026.03.17] 硬件控制窗口实例（资源隔离：独立渲染进程）
 let hardwareControlWindow = null
@@ -232,10 +239,45 @@ ipcMain.handle('convert-to-h264', async (event, sourcePath) => {
 
 // 存储和管理正在运行的脚本进程
 const runningScripts = new Map();
+const executionStageMap = new Map();
+const runtimeState = createRuntimeState();
+
+function getSoftwareWindows() {
+  return BrowserWindow.getAllWindows().filter((win) => {
+    if (!win || win.isDestroyed()) {
+      return false
+    }
+
+    const url = win.webContents.getURL() || ''
+    return url.includes('software.html')
+  })
+}
+
+function sendToSoftwareWindows(channel, payload) {
+  const softwareWindows = getSoftwareWindows()
+  softwareWindows.forEach((win) => {
+    win.webContents.send(channel, payload)
+  })
+}
+
+function broadcastRuntimeState() {
+  sendToSoftwareWindows('runtime-state', cloneRuntimeState(runtimeState))
+}
+
+ipcMain.handle('get-runtime-state', async () => {
+  return cloneRuntimeState(runtimeState)
+})
+
+ipcMain.handle('update-runtime-state', async (event, patch = {}) => {
+  applyRuntimePatch(runtimeState, patch)
+  broadcastRuntimeState()
+  return { success: true, state: cloneRuntimeState(runtimeState) }
+})
 
 ipcMain.handle('run-python', async (event, { scriptName, args = [] }) => {
   try {
     const pythonPath = 'python';
+    const stageKey = inferStageFromArgs(args)
 
     // 确定 dist 目录的路径
     // 如果是打包应用，dist 在 resources 目录下
@@ -275,6 +317,14 @@ ipcMain.handle('run-python', async (event, { scriptName, args = [] }) => {
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
+    if (stageKey) {
+      resetDownstreamCompletion(runtimeState, stageKey)
+      runtimeState.activeScriptType = stageKey
+      runtimeState.runningExecutions[stageKey] = executionId
+      executionStageMap.set(executionId, stageKey)
+      broadcastRuntimeState()
+    }
+
     // 存储进程
     runningScripts.set(executionId, pythonProcess);
     
@@ -282,7 +332,7 @@ ipcMain.handle('run-python', async (event, { scriptName, args = [] }) => {
     pythonProcess.stdout.on('data', (data) => {
       const output = decodeBuffer(data);
       // 实时发送输出到渲染进程
-      event.sender.send('python-output', {
+      sendToSoftwareWindows('python-output', {
         type: 'stdout',
         executionId,
         data: output
@@ -293,7 +343,7 @@ ipcMain.handle('run-python', async (event, { scriptName, args = [] }) => {
     pythonProcess.stderr.on('data', (data) => {
       const output = decodeBuffer(data);
       // 实时发送错误输出到渲染进程
-      event.sender.send('python-output', {
+      sendToSoftwareWindows('python-output', {
         type: 'stderr',
         executionId,
         data: output
@@ -302,9 +352,23 @@ ipcMain.handle('run-python', async (event, { scriptName, args = [] }) => {
 
     // 进程结束时处理
     pythonProcess.on('close', (code) => {
+      const stage = executionStageMap.get(executionId)
       runningScripts.delete(executionId); // 从Map中移除
+
+      if (stage) {
+        if (code === 0) {
+          runtimeState.stageCompletion[stage] = true
+        }
+        if (runtimeState.activeScriptType === stage) {
+          runtimeState.activeScriptType = null
+        }
+        runtimeState.runningExecutions[stage] = null
+        executionStageMap.delete(executionId)
+        broadcastRuntimeState()
+      }
+
       // 发送进程结束信号
-      event.sender.send('python-output', {
+      sendToSoftwareWindows('python-output', {
         type: 'close',
         executionId,
         code
@@ -313,8 +377,19 @@ ipcMain.handle('run-python', async (event, { scriptName, args = [] }) => {
       
     // 进程启动错误处理
     pythonProcess.on('error', (err) => {
+      const stage = executionStageMap.get(executionId)
       runningScripts.delete(executionId); // 从Map中移除
-      event.sender.send('python-output', {
+
+      if (stage) {
+        if (runtimeState.activeScriptType === stage) {
+          runtimeState.activeScriptType = null
+        }
+        runtimeState.runningExecutions[stage] = null
+        executionStageMap.delete(executionId)
+        broadcastRuntimeState()
+      }
+
+      sendToSoftwareWindows('python-output', {
         type: 'error',
         executionId,
         data: `启动Python进程失败: ${err.message}`

@@ -23,6 +23,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 视频转码API
     convertToH264: (filePath) => ipcRenderer.invoke('convert-to-h264', filePath),
 
+    // 运行时状态同步API
+    getRuntimeState: () => ipcRenderer.invoke('get-runtime-state'),
+    updateRuntimeState: (statePatch) => ipcRenderer.invoke('update-runtime-state', statePatch),
+    onRuntimeState: (callback) => {
+        const listener = (_, data) => callback(data)
+        ipcRenderer.on('runtime-state', listener)
+        return () => ipcRenderer.removeListener('runtime-state', listener)
+    },
+
     // 添加监听Python输出的方法
     onPythonOutput: (callback) => ipcRenderer.on('python-output', (_, data) => callback(data))
 })

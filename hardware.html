@@ -6,7 +6,7 @@
     <title>AniTrack - Hardware</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="hardware-route-page">
+<body class="hardware-route-page" data-ui-theme="balanced-neutral-v2">
     <button class="back-button" type="button" aria-label="返回主界面" onclick="window.location.href='home.html'">
         <svg class="back-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M14.71 5.29a1 1 0 0 1 0 1.42L10.42 11l4.29 4.29a1 1 0 1 1-1.42 1.42l-5-5a1 1 0 0 1 0-1.42l5-5a1 1 0 0 1 1.42 0Z" />
@@ -14,19 +14,28 @@
     </button>
 
     <main class="hardware-route-shell">
-        <section class="hardware-route-card" role="status" aria-live="polite" aria-atomic="true">
-            <div class="hardware-status-head">
-                <span id="hardwareSignalDot" class="hardware-signal-dot"></span>
-                <p class="hardware-kicker">Hardware Control</p>
-            </div>
+        <section class="hardware-route-panel">
+            <article class="hardware-route-card" role="status" aria-live="polite" aria-atomic="true">
+                <div class="hardware-status-topline">
+                    <div class="hardware-status-head">
+                        <div class="hardware-signal-orbit" aria-hidden="true">
+                            <span id="hardwareSignalDot" class="hardware-signal-dot"></span>
+                        </div>
+                        <p class="hardware-kicker">Hardware Control</p>
+                    </div>
 
-            <h2 id="hardwareStatusTitle" class="hardware-status-title">硬件控制界面启动中</h2>
-            <p id="hardwareStatusDetail" class="hardware-status-detail">正在调出树莓派控制窗口，请稍候。</p>
-            <p id="hardwareStatusMeta" class="hardware-status-meta">系统正在初始化连接流程...</p>
+                    <div class="hardware-status-meta-corner">
+                        <span id="hardwareStatusMeta" class="hardware-status-meta">系统正在初始化连接流程...</span>
+                    </div>
+                </div>
 
-            <div class="hardware-route-actions">
-                <button id="openHardwareBtn" class="main-entry-button hardware-open-button" onclick="openHardwareWindow({ manual: true })">重新打开硬件界面</button>
-            </div>
+                <h2 id="hardwareStatusTitle" class="hardware-status-title">硬件控制界面启动中</h2>
+                <p id="hardwareStatusDetail" class="hardware-status-detail">正在调出树莓派控制窗口，请稍候。</p>
+
+                <div class="hardware-route-actions">
+                    <button id="openHardwareBtn" class="main-entry-button hardware-open-button" onclick="openHardwareWindow({ manual: true })">重新打开硬件界面</button>
+                </div>
+            </article>
         </section>
     </main>
 
