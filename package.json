@@ -1,6 +1,6 @@
 {
   "name": "anihunter",
-  "version": "1.1.5",
+  "version": "1.1.7",
   "main": "main.js",
   "scripts": {
     "start": "electron-forge start",
@@ -8,7 +8,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make"
   },
-  "author": "Chen Haul",
+  "author": "Chen Haul，Yixun Xie",
   "license": "ISC",
   "description": "Your anime tracking application",
   "homepage": "https://www.nju.edu.cn/",

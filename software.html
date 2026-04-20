@@ -62,8 +62,13 @@
     </div>
 
     <div class="grid-container">
-        <div class="video-player">
+        <div class="video-player is-empty" id="videoPlayerShell1">
             <video id="video1" controls></video>
+            <div class="video-empty-state" aria-hidden="true">
+                
+                <span class="video-empty-title">选择视频文件以预览(ゝ∀･)</span>
+                
+            </div>
             <div class="controls">
                 <button onclick="selectVideo(1)">选择视频</button>
             </div>
@@ -102,19 +107,32 @@
                 </div>
 
                 <div class="stage-workspace-body">
-                    <div id="stageRail" class="stage-rail" aria-label="阶段选择器">
-                        <button class="stage-selector-btn" type="button" data-stage-select="preprocess">
-                            <span class="stage-selector-main">预处理</span>
-                            <span class="stage-selector-meta">待选择输入</span>
-                        </button>
-                        <button class="stage-selector-btn" type="button" data-stage-select="detection">
-                            <span class="stage-selector-main">检测追踪</span>
-                            <span class="stage-selector-meta">待选择输入</span>
-                        </button>
-                        <button class="stage-selector-btn" type="button" data-stage-select="analysis">
-                            <span class="stage-selector-main">智能分析</span>
-                            <span class="stage-selector-meta">待选择输入</span>
-                        </button>
+                    <div class="stage-overview-shell">
+                        <div class="stage-overview-illustration" aria-hidden="true">
+                            <img class="stage-overview-fish-image" src="assets/figures/fish3.png" alt="" />
+                        </div>
+                        <div id="stageRail" class="stage-rail" aria-label="阶段选择器">
+                            <button class="stage-selector-btn" type="button" data-stage-select="preprocess">
+                                <span class="stage-selector-main">预处理</span>
+                                <span class="stage-selector-meta">待选择输入</span>
+                            </button>
+                            <div class="stage-flow-arrow" aria-hidden="true">
+                                <span class="stage-flow-arrow-line"></span>
+                                <span class="stage-flow-arrow-head"></span>
+                            </div>
+                            <button class="stage-selector-btn" type="button" data-stage-select="detection">
+                                <span class="stage-selector-main">检测追踪</span>
+                                <span class="stage-selector-meta">待选择输入</span>
+                            </button>
+                            <div class="stage-flow-arrow" aria-hidden="true">
+                                <span class="stage-flow-arrow-line"></span>
+                                <span class="stage-flow-arrow-head"></span>
+                            </div>
+                            <button class="stage-selector-btn" type="button" data-stage-select="analysis">
+                                <span class="stage-selector-main">智能分析</span>
+                                <span class="stage-selector-meta">待选择输入</span>
+                            </button>
+                        </div>
                     </div>
 
                     <section id="stageDetailPanel" class="stage-detail-panel" aria-live="polite" hidden>
@@ -141,6 +159,7 @@
     </div>
 
     <script src="stage-controls.js"></script>
+    <script src="file-list-visibility.js"></script>
     <script src="renderer.js"></script>
     <script src="stage-workspace.js"></script>
 </body>

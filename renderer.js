@@ -9,6 +9,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const folderPath2 = document.getElementById('folderPath2');
     const folderPathShell1 = document.getElementById('folderPathShell1');
     const FOLDER_PATH_PLACEHOLDER = '请选择文件夹路径';
+    let shouldShowPrimaryFileList = false;
+
+    function syncVideoEmptyState(videoElement) {
+        if (!videoElement) {
+            return;
+        }
+
+        const playerShell = videoElement.closest('.video-player');
+        if (!playerShell) {
+            return;
+        }
+
+        const currentSrc = videoElement.currentSrc || videoElement.src || '';
+        const hasSource = Boolean(currentSrc.trim());
+        const isReady = videoElement.readyState >= 2;
+        playerShell.classList.toggle('is-empty', !(hasSource && isReady));
+    }
 
     function syncFolderPathVisualState(pathElement, shellElement, placeholderText) {
         if (!pathElement || !shellElement) {
@@ -32,6 +49,33 @@ document.addEventListener('DOMContentLoaded', () => {
         regionElement.setAttribute('aria-hidden', String(!isVisible));
     }
 
+    function hasSelectedVideo(videoElement) {
+        if (!videoElement) {
+            return false;
+        }
+
+        const originalPath = videoElement.dataset.originalPath || '';
+        const currentSrc = videoElement.currentSrc || videoElement.src || '';
+        return Boolean(originalPath.trim() || currentSrc.trim());
+    }
+
+    function syncPrimaryFileListRegionVisibility(forceVisible = null) {
+        if (forceVisible !== null) {
+            shouldShowPrimaryFileList = forceVisible;
+        }
+
+        const isVisible = window.FileListVisibility
+            ? window.FileListVisibility.computePrimaryFileListVisibility({ shouldShowPrimaryFileList })
+            : Boolean(shouldShowPrimaryFileList);
+        syncFileListRegionVisibility(fileListRegion1, isVisible);
+    }
+
+    function syncPrimaryFileListStateFromSourcePath(sourcePath) {
+        shouldShowPrimaryFileList = window.FileListVisibility
+            ? window.FileListVisibility.computePrimaryFileListStateFromSourcePath({ sourcePath })
+            : Boolean(sourcePath && sourcePath.trim());
+    }
+
     function syncFileListVisualRows(fileListElement, itemCount) {
         if (!fileListElement) {
             return;
@@ -45,6 +89,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 视频错误监听
     [video1, video2].forEach((video, index) => {
         if (!video) return;
+
+        syncVideoEmptyState(video);
+        ['loadeddata', 'loadedmetadata', 'canplay', 'emptied', 'suspend', 'error'].forEach((eventName) => {
+            video.addEventListener(eventName, () => {
+                syncVideoEmptyState(video);
+                if (video === video1) {
+                    syncPrimaryFileListRegionVisibility();
+                }
+            });
+        });
+
         video.addEventListener('error', (e) => {
             const error = video.error;
             let errorMessage = '未知视频错误';
@@ -59,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const originalPath = video.dataset.originalPath;
                     video.dataset.isConverting = 'true'; // 标记正在转码
-                    
+
                     logMessage(`<span class="progress-message">检测到视频编码不兼容 (MEDIA_ERR_SRC_NOT_SUPPORTED)，正在生成兼容预览版...</span>`);
                     logMessage(`<span class="progress-message">这可能需要一小会，取决于视频大小，请稍候...</span>`);
 
@@ -73,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             logMessage(`<span class="output-message">预览版生成成功，即将播放。</span>`);
                             // 添加时间戳防止缓存
                             video.src = `file:///${result.path.replace(/\\/g, '/')}?t=${new Date().getTime()}`;
+                            syncVideoEmptyState(video);
                         } else {
                             logMessage(`<span class="error-message">自动转码失败: ${result.error}</span>`);
                         }
@@ -80,8 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
                          logMessage(`<span class="error-message">调用转码服务出错: ${err.message}</span>`);
                     }).finally(() => {
                         video.dataset.isConverting = 'false';
+                        syncVideoEmptyState(video);
                     });
-                    
+
                     return; // 暂不显示常规错误信息
                 }
 
@@ -164,8 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     folderPath1.textContent = FOLDER_PATH_PLACEHOLDER;
-    const hasInitialFolder = syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-    syncFileListRegionVisibility(fileListRegion1, hasInitialFolder);
+    syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+    syncPrimaryFileListRegionVisibility();
     syncFileListVisualRows(fileList1, 0);
     startAnalysisBtn.disabled = true;
     openResultsBtn.disabled = true;
@@ -323,16 +380,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (normalized.sourcePath) {
             folderPath1.textContent = normalized.sourcePath;
-            const hasFolderPath = syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-            syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
+            syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+            syncPrimaryFileListStateFromSourcePath(normalized.sourcePath);
             useFolderPathAsArg(normalized.sourcePath, { silent: true });
             loadFilesFromFolder(normalized.sourcePath, 1);
         } else {
             folderPath1.textContent = FOLDER_PATH_PLACEHOLDER;
-            const hasFolderPath = syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-            syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
+            syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+            syncPrimaryFileListStateFromSourcePath('');
             fileList1.innerHTML = '';
             syncFileListVisualRows(fileList1, 0);
+            if (video1) {
+                video1.removeAttribute('src');
+                delete video1.dataset.originalPath;
+                video1.load();
+                syncVideoEmptyState(video1);
+            }
+            syncPrimaryFileListRegionVisibility();
             if (startAnalysisBtn) startAnalysisBtn.disabled = true;
             if (openResultsBtn) openResultsBtn.disabled = true;
             if (saveAsBtn) saveAsBtn.disabled = true;
@@ -371,9 +435,17 @@ document.addEventListener('DOMContentLoaded', () => {
         window.electronAPI.selectVideo({ playerId }).then(result => {
             if (result.path) {
                 const videoElement = document.getElementById(`video${result.playerId}`);
-                // videoElement.src = `file://${result.path}`; // 原有逻辑                
-                videoElement.dataset.originalPath = result.path;                
+                // videoElement.src = `file://${result.path}`; // 原有逻辑
+                videoElement.dataset.originalPath = result.path;
                 videoElement.src = `file:///${result.path.replace(/\\/g, '/')}`; // 处理路径分隔符
+                syncVideoEmptyState(videoElement);
+                if (Number(result.playerId) === 1) {
+                    const folderPath = result.path.replace(/[/\\][^/\\]+$/, '');
+                    folderPath1.textContent = folderPath;
+                    syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+                    syncPrimaryFileListStateFromSourcePath(folderPath);
+                    loadFilesFromFolder(folderPath, 1);
+                }
                 logMessage(`播放器${result.playerId}加载视频: ${result.path}`);
             }
         }).catch(err => {
@@ -387,8 +459,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const folderPathElement = document.getElementById(`folderPath${result.playerId}`);
                 folderPathElement.textContent = result.path;
                 if (result.playerId === 1 || result.playerId === '1') {
-                    const hasFolderPath = syncFolderPathVisualState(folderPathElement, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-                    syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
+                    syncFolderPathVisualState(folderPathElement, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+                    syncPrimaryFileListStateFromSourcePath(result.path);
+                    if (video1) {
+                        video1.removeAttribute('src');
+                        delete video1.dataset.originalPath;
+                        video1.load();
+                        syncVideoEmptyState(video1);
+                    }
+                    fileList1.innerHTML = '';
+                    syncFileListVisualRows(fileList1, 0);
+                    syncPrimaryFileListRegionVisibility();
 
                     stageCompletion.detection = false;
                     stageCompletion.analysis = false;
@@ -441,6 +522,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (files.length === 0) {
                 fileListElement.innerHTML = '<div class="file-empty-state">没有找到视频文件</div>';
                 syncFileListVisualRows(fileListElement, 0);
+                if (Number(playerId) === 1) {
+                    syncPrimaryFileListRegionVisibility();
+                }
                 return;
             }
 
@@ -450,18 +534,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 fileItem.textContent = file.name;
                 fileItem.addEventListener('click', () => {
                     const videoElement = document.getElementById(`video${playerId}`);
-                    // videoElement.src = `file://${file.path}`; // 原有逻辑                    
-                    videoElement.dataset.originalPath = file.path;                    
+                    // videoElement.src = `file://${file.path}`; // 原有逻辑
+                    videoElement.dataset.originalPath = file.path;
                     videoElement.src = `file:///${file.path.replace(/\\/g, '/')}`; // 处理路径分隔符
+                    syncVideoEmptyState(videoElement);
+                    if (Number(playerId) === 1) {
+                        syncPrimaryFileListRegionVisibility(true);
+                    }
                     logMessage(`播放器${playerId}加载视频: ${file.name}`);
                 });
                 fileListElement.appendChild(fileItem);
             });
 
             syncFileListVisualRows(fileListElement, files.length);
+            if (Number(playerId) === 1) {
+                syncPrimaryFileListRegionVisibility();
+            }
         }).catch(err => {
             logMessage(`加载文件列表出错: ${err.message}`);
             syncFileListVisualRows(fileListElement, 0);
+            if (Number(playerId) === 1) {
+                syncPrimaryFileListRegionVisibility();
+            }
         });
     }
 
@@ -662,8 +756,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (scriptType === 'preprocess' && preprocessFolderPath && exitCode === 0) {
                         folderPath1.textContent = preprocessFolderPath;
-                        const hasFolderPath = syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-                        syncFileListRegionVisibility(fileListRegion1, hasFolderPath);
+                        syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
+                        syncPrimaryFileListStateFromSourcePath(preprocessFolderPath);
+                        if (video1) {
+                            video1.removeAttribute('src');
+                            delete video1.dataset.originalPath;
+                            video1.load();
+                            syncVideoEmptyState(video1);
+                        }
+                        syncPrimaryFileListRegionVisibility();
                         loadFilesFromFolder(preprocessFolderPath, 1);
                         useFolderPathAsArg(preprocessFolderPath);
                         stageCompletion.detection = false;

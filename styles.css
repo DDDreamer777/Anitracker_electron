@@ -258,6 +258,25 @@ body {
     border-radius: var(--app-panel-radius);
     box-shadow: var(--app-shadow-strong), inset 0 1px 0 rgba(255, 255, 255, 0.84);
     overflow: hidden;
+    isolation: isolate;
+}
+
+.video-player.is-empty {
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0) 48%),
+        linear-gradient(180deg, rgba(249, 251, 252, 0.9) 0%, rgba(235, 240, 245, 0.94) 52%, rgba(226, 233, 240, 0.98) 100%);
+}
+
+.video-player.is-empty::before {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border-radius: calc(var(--app-panel-radius) - 8px);
+    border: 1px solid rgba(188, 199, 210, 0.34);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(236, 242, 247, 0.08));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    z-index: 0;
 }
 
 video {
@@ -268,12 +287,64 @@ video {
     max-height: 100%;
     border-radius: calc(var(--app-panel-radius) - 2px);
     background: linear-gradient(180deg, rgba(248, 249, 250, 0.92) 0%, rgba(236, 240, 243, 0.96) 100%);
+    position: relative;
+    z-index: 1;
+    transition: opacity var(--app-motion-medium) var(--app-ease-standard);
+}
+
+.video-player.is-empty video {
+    opacity: 0;
+}
+
+.video-empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 32px;
+    text-align: center;
+    color: #73808d;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+        opacity var(--app-motion-medium) var(--app-ease-standard),
+        transform var(--app-motion-medium) var(--app-ease-standard);
+}
+
+.video-player.is-empty .video-empty-state {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.video-empty-kicker {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #9da8b1;
+}
+
+.video-empty-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #61707d;
+}
+
+.video-empty-copy {
+    font-size: 13px;
+    color: #8d99a4;
 }
 
 .controls {
     position: absolute;
     bottom: 14px;
     left: 14px;
+    z-index: 2;
 }
 
 .right-panel {
@@ -403,6 +474,19 @@ video {
     margin: 10px 0 8px;
     height: 1px;
     background: linear-gradient(to right, rgba(184, 194, 202, 0.42), rgba(184, 194, 202, 0.08));
+}
+
+.file-list-region {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+    transition:
+        opacity var(--app-motion-fast) var(--app-ease-standard),
+        margin-top var(--app-motion-fast) var(--app-ease-standard);
+}
+
+.file-list-region.is-collapsed {
+    display: none;
 }
 
 .file-list {
@@ -570,13 +654,56 @@ video {
     width: 100%;
 }
 
+.stage-overview-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(96px, var(--stage-selector-width));
+    gap: 12px;
+    align-items: stretch;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.stage-overview-illustration {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px 12px 10px;
+    overflow: hidden;
+}
+
+.stage-overview-illustration::before {
+    content: "";
+    position: absolute;
+    inset: 18px 10px 18px 8px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 38% 45%, rgba(236, 242, 247, 0.58), rgba(236, 242, 247, 0) 68%);
+    pointer-events: none;
+}
+
+.stage-overview-fish-image {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 214px);
+    max-height: 100%;
+    object-fit: contain;
+    opacity: 0.96;
+    filter: drop-shadow(0 12px 24px rgba(156, 171, 184, 0.12));
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
 .stage-rail {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
     width: min(var(--stage-selector-width), 100%);
     margin: 0 0 0 auto;
     align-items: stretch;
+    align-self: stretch;
+    min-height: 100%;
 }
 
 .stage-selector-btn {
@@ -594,6 +721,9 @@ video {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(240, 243, 245, 0.84) 100%);
     box-shadow: 0 10px 22px rgba(112, 123, 132, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.84);
     text-align: center;
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 1;
     transition:
         transform var(--app-motion-fast) var(--app-ease-standard),
         opacity var(--app-motion-fast) var(--app-ease-standard),
@@ -603,6 +733,38 @@ video {
         padding var(--app-motion-fast) var(--app-ease-standard),
         margin var(--app-motion-fast) var(--app-ease-standard),
         box-shadow var(--app-motion-fast) var(--app-ease-standard);
+}
+
+.stage-flow-arrow {
+    flex: 1 1 0;
+    min-height: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 0;
+    margin: 1px 0;
+    pointer-events: none;
+}
+
+.stage-flow-arrow-line {
+    flex: 1 1 auto;
+    width: 2px;
+    min-height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(177, 193, 207, 0.2) 0%, rgba(147, 169, 188, 0.78) 50%, rgba(177, 193, 207, 0.18) 100%);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.stage-flow-arrow-head {
+    width: 10px;
+    height: 10px;
+    margin-top: 3px;
+    border-right: 2px solid rgba(126, 149, 170, 0.82);
+    border-bottom: 2px solid rgba(126, 149, 170, 0.82);
+    transform: rotate(45deg);
+    border-radius: 1px;
+    opacity: 0.92;
 }
 
 .stage-selector-btn:hover {
@@ -660,6 +822,15 @@ video {
 
 .stage-workspace[data-stage-mode="detail"] .stage-workspace-body {
     grid-template-columns: minmax(96px, var(--stage-selector-width)) minmax(0, 1fr);
+}
+
+.stage-workspace[data-stage-mode="detail"] .stage-overview-shell {
+    display: block;
+    width: var(--stage-selector-width);
+}
+
+.stage-workspace[data-stage-mode="detail"] .stage-overview-illustration {
+    display: none;
 }
 
 .stage-workspace[data-stage-mode="detail"] .stage-rail {
