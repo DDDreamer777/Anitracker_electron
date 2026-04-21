@@ -9,7 +9,7 @@
         root.StageControls = api;
     }
 }(typeof globalThis !== 'undefined' ? globalThis : this, function (sharedStageDefinition) {
-    const stageDefinition = sharedStageDefinition || require('./stage-definition');
+    const stageDefinition = sharedStageDefinition || require('../stage-definition');
     const { STAGE_KEYS, STAGE_CONFIG } = stageDefinition;
 
     function getStageOutputPath(sourcePath) {
