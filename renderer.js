@@ -1,876 +1,215 @@
 document.addEventListener('DOMContentLoaded', () => {
     const runtimeStateApi = window.RuntimeState;
-    const normalizeRuntimeSnapshot = runtimeStateApi
-        ? runtimeStateApi.normalizeRuntimeSnapshot
-        : () => ({
-            sourcePath: '',
-            preprocessFolderPath: '',
-            activeScriptType: null,
-            runningExecutions: {
-                preprocess: null,
-                detection: null,
-                analysis: null
-            },
-            stageCompletion: {
-                preprocess: false,
-                detection: false,
-                analysis: false
-            }
-        });
-    const resetRuntimeStateDownstreamCompletion = runtimeStateApi
-        ? runtimeStateApi.resetDownstreamCompletion
-        : () => {};
-    const video1 = document.getElementById('video1');
-    const video2 = document.getElementById('video2');
-    const outputDiv = document.getElementById('output');
-    const fileList1 = document.getElementById('fileList1');
-    const fileList2 = document.getElementById('fileList2');
-    const fileListRegion1 = document.getElementById('fileListRegion1');
-    const folderPath1 = document.getElementById('folderPath1');
-    const folderPath2 = document.getElementById('folderPath2');
-    const folderPathShell1 = document.getElementById('folderPathShell1');
+    const fileListVisibilityApi = window.FileListVisibility;
+    const runtimeClientApi = window.RendererRuntimeClient;
+    const logConsoleApi = window.RendererLogConsole;
+    const mediaPreviewApi = window.RendererMediaPreview;
+    const fileBrowserApi = window.RendererFileBrowser;
+    const stageControllerApi = window.RendererStageController;
+    const appControllerApi = window.RendererAppController;
+
+    if (!runtimeStateApi || !runtimeClientApi || !logConsoleApi || !mediaPreviewApi || !fileBrowserApi || !stageControllerApi || !appControllerApi) {
+        console.error('Renderer modules are not fully available.');
+        return;
+    }
+
     const FOLDER_PATH_PLACEHOLDER = '请选择文件夹路径';
-    let shouldShowPrimaryFileList = false;
+    const videos = {
+        1: document.getElementById('video1'),
+        2: document.getElementById('video2')
+    };
+    const outputElement = document.getElementById('output');
+    const folderPathElements = {
+        1: document.getElementById('folderPath1'),
+        2: document.getElementById('folderPath2')
+    };
+    const fileListElements = {
+        1: document.getElementById('fileList1'),
+        2: document.getElementById('fileList2')
+    };
+    const actionButtons = {
+        startPreprocessBtn: document.getElementById('startPreprocessBtn'),
+        startDetectionBtn: document.getElementById('startDetectionBtn'),
+        startAnalysisBtn: document.getElementById('startAnalysisBtn'),
+        openResultsBtn: document.getElementById('openResultsBtn'),
+        saveAsBtn: document.getElementById('saveAsBtn'),
+        stopScriptBtn: document.getElementById('stopScriptBtn')
+    };
+    const toolDrawerElements = {
+        toolDrawerToggleBtn: document.getElementById('toolDrawerToggleBtn'),
+        toolDrawerPanel: document.getElementById('toolDrawerPanel'),
+        toolboxHint: document.getElementById('toolDrawerToggleBtn')
+            ? document.getElementById('toolDrawerToggleBtn').closest('.toolbox-hint')
+            : null,
+        documentRef: document,
+        windowRef: window
+    };
+    const scriptArgsInput = document.getElementById('scriptArgs');
+    const analysisScriptArgsInput = document.getElementById('analysisScriptArgs');
+    const folderPathShell1 = document.getElementById('folderPathShell1');
+    const fileListRegion1 = document.getElementById('fileListRegion1');
 
-    function syncVideoEmptyState(videoElement) {
-        if (!videoElement) {
-            return;
-        }
+    const logConsole = logConsoleApi.createLogConsole({ outputElement });
+    const { logMessage } = logConsole;
 
-        const playerShell = videoElement.closest('.video-player');
-        if (!playerShell) {
-            return;
-        }
-
-        const currentSrc = videoElement.currentSrc || videoElement.src || '';
-        const hasSource = Boolean(currentSrc.trim());
-        const isReady = videoElement.readyState >= 2;
-        playerShell.classList.toggle('is-empty', !(hasSource && isReady));
-    }
-
-    function syncFolderPathVisualState(pathElement, shellElement, placeholderText) {
-        if (!pathElement || !shellElement) {
-            return false;
-        }
-
-        const value = pathElement.textContent ? pathElement.textContent.trim() : '';
-        const isEmpty = !value || value === placeholderText;
-        shellElement.classList.toggle('is-empty', isEmpty);
-        shellElement.classList.toggle('is-active', !isEmpty);
-        pathElement.title = isEmpty ? placeholderText : value;
-        return !isEmpty;
-    }
-
-    function syncFileListRegionVisibility(regionElement, isVisible) {
-        if (!regionElement) {
-            return;
-        }
-
-        regionElement.classList.toggle('is-collapsed', !isVisible);
-        regionElement.setAttribute('aria-hidden', String(!isVisible));
-    }
-
-    function hasSelectedVideo(videoElement) {
-        if (!videoElement) {
-            return false;
-        }
-
-        const originalPath = videoElement.dataset.originalPath || '';
-        const currentSrc = videoElement.currentSrc || videoElement.src || '';
-        return Boolean(originalPath.trim() || currentSrc.trim());
-    }
-
-    function syncPrimaryFileListRegionVisibility(forceVisible = null) {
-        if (forceVisible !== null) {
-            shouldShowPrimaryFileList = forceVisible;
-        }
-
-        const isVisible = window.FileListVisibility
-            ? window.FileListVisibility.computePrimaryFileListVisibility({ shouldShowPrimaryFileList })
-            : Boolean(shouldShowPrimaryFileList);
-        syncFileListRegionVisibility(fileListRegion1, isVisible);
-    }
-
-    function syncPrimaryFileListStateFromSourcePath(sourcePath) {
-        shouldShowPrimaryFileList = window.FileListVisibility
-            ? window.FileListVisibility.computePrimaryFileListStateFromSourcePath({ sourcePath })
-            : Boolean(sourcePath && sourcePath.trim());
-    }
-
-    function syncFileListVisualRows(fileListElement, itemCount) {
-        if (!fileListElement) {
-            return;
-        }
-
-        const safeCount = Number.isFinite(itemCount) ? itemCount : 0;
-        const visibleRows = Math.max(1, Math.min(2, safeCount));
-        fileListElement.style.setProperty('--file-list-visible-rows', String(visibleRows));
-    }
-
-    // 视频错误监听
-    [video1, video2].forEach((video, index) => {
-        if (!video) return;
-
-        syncVideoEmptyState(video);
-        ['loadeddata', 'loadedmetadata', 'canplay', 'emptied', 'suspend', 'error'].forEach((eventName) => {
-            video.addEventListener(eventName, () => {
-                syncVideoEmptyState(video);
-                if (video === video1) {
-                    syncPrimaryFileListRegionVisibility();
-                }
-            });
-        });
-
-        video.addEventListener('error', (e) => {
-            const error = video.error;
-            let errorMessage = '未知视频错误';
-            if (error) {
-                // 如果是格式不支持 (code 4) 且有原始路径，尝试自动转码
-                if (error.code === 4 && video.dataset.originalPath && video.dataset.isConverting !== 'true') {
-                     // 防止重复触发
-                     if (video.src.includes('_temp')) {
-                         logMessage(`<span class="error-message">转码后的视频无法播放，可能是严重损坏或ffmpeg转换失败。</span>`);
-                         return;
-                     }
-
-                    const originalPath = video.dataset.originalPath;
-                    video.dataset.isConverting = 'true'; // 标记正在转码
-
-                    logMessage(`<span class="progress-message">检测到视频编码不兼容 (MEDIA_ERR_SRC_NOT_SUPPORTED)，正在生成兼容预览版...</span>`);
-                    logMessage(`<span class="progress-message">这可能需要一小会，取决于视频大小，请稍候...</span>`);
-
-                    window.electronAPI.convertToH264(originalPath).then(result => {
-                         // 将后端的调试信息显示在前端
-                        if (result.debugInfo) {
-                            logMessage(`<span class="debug-message" style="color: gray; font-size: 0.9em;"> ${result.debugInfo}</span>`);
-                        }
-
-                        if (result.success) {
-                            logMessage(`<span class="output-message">预览版生成成功，即将播放。</span>`);
-                            // 添加时间戳防止缓存
-                            video.src = `file:///${result.path.replace(/\\/g, '/')}?t=${new Date().getTime()}`;
-                            syncVideoEmptyState(video);
-                        } else {
-                            logMessage(`<span class="error-message">自动转码失败: ${result.error}</span>`);
-                        }
-                    }).catch(err => {
-                         logMessage(`<span class="error-message">调用转码服务出错: ${err.message}</span>`);
-                    }).finally(() => {
-                        video.dataset.isConverting = 'false';
-                        syncVideoEmptyState(video);
-                    });
-
-                    return; // 暂不显示常规错误信息
-                }
-
-                switch (error.code) {
-                    case 1: errorMessage = '视频加载被中止 (MEDIA_ERR_ABORTED)'; break;
-                    case 2: errorMessage = '网络错误导致下载失败 (MEDIA_ERR_NETWORK)'; break;
-                    case 3: errorMessage = '视频解码失败 (MEDIA_ERR_DECODE) - 可能是编码格式(如H.265)不支持'; break;
-                    case 4: errorMessage = '视频格式不支持或来源无法访问 (MEDIA_ERR_SRC_NOT_SUPPORTED)'; break;
-                }
-                const fullMsg = `播放器${index + 1} 发生错误: ${errorMessage}`;
-                console.error(fullMsg, error);
-                logMessage(`<span class="error-message">${fullMsg}</span>`);
-            }
-        });
+    const runtimeClient = runtimeClientApi.createRuntimeClient({
+        runtimeStateApi,
+        electronAPI: window.electronAPI
     });
 
-    const startAnalysisBtn = document.getElementById('startAnalysisBtn');
-    const openResultsBtn = document.getElementById('openResultsBtn');
-    const saveAsBtn = document.getElementById('saveAsBtn');
-    const stopScriptBtn = document.getElementById('stopScriptBtn');
-    const toolDrawerToggleBtn = document.getElementById('toolDrawerToggleBtn');
-    const toolDrawerPanel = document.getElementById('toolDrawerPanel');
-    const toolboxHint = toolDrawerToggleBtn ? toolDrawerToggleBtn.closest('.toolbox-hint') : null;
+    let appController = null;
+    let fileBrowser = null;
+    let stageController = null;
 
-    function setToolDrawerOpen(isOpen) {
-        if (!toolboxHint || !toolDrawerToggleBtn || !toolDrawerPanel) {
-            return;
-        }
-
-        toolboxHint.classList.toggle('is-open', isOpen);
-        toolDrawerToggleBtn.setAttribute('aria-expanded', String(isOpen));
-        toolDrawerPanel.setAttribute('aria-hidden', String(!isOpen));
-    }
-
-    function syncToolDrawerButtonWidth() {
-        if (!toolDrawerPanel) {
-            return;
-        }
-
-        const drawerButtons = Array.from(toolDrawerPanel.querySelectorAll('.tool-drawer-btn'));
-        if (drawerButtons.length === 0) {
-            return;
-        }
-
-        const maxCharCount = drawerButtons.reduce((maxLen, button) => {
-            const text = button.textContent ? button.textContent.trim() : '';
-            return Math.max(maxLen, text.length);
-        }, 0);
-
-        const targetWidth = Math.max(68, Math.min(124, (maxCharCount * 13) + 12));
-        toolDrawerPanel.style.setProperty('--tool-drawer-btn-width', `${targetWidth}px`);
-    }
-
-    if (toolboxHint && toolDrawerToggleBtn && toolDrawerPanel) {
-        syncToolDrawerButtonWidth();
-
-        toolDrawerToggleBtn.addEventListener('click', (event) => {
-            event.stopPropagation();
-            const isOpen = toolboxHint.classList.contains('is-open');
-            setToolDrawerOpen(!isOpen);
-        });
-
-        toolDrawerPanel.addEventListener('click', (event) => {
-            event.stopPropagation();
-        });
-
-        document.addEventListener('click', (event) => {
-            if (toolboxHint.classList.contains('is-open') && !toolboxHint.contains(event.target)) {
-                setToolDrawerOpen(false);
+    const mediaPreview = mediaPreviewApi.createMediaPreview({
+        videos,
+        logMessage,
+        electronAPI: window.electronAPI,
+        onPrimaryPreviewVisibilityChange() {
+            if (fileBrowser && typeof fileBrowser.syncPrimaryFileListRegionVisibility === 'function') {
+                fileBrowser.syncPrimaryFileListRegionVisibility();
             }
-        });
+        }
+    });
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && toolboxHint.classList.contains('is-open')) {
-                setToolDrawerOpen(false);
-            }
-        });
-
-        window.addEventListener('resize', syncToolDrawerButtonWidth);
+    async function handlePrimarySourceChanged(sourcePath, options = {}) {
+        if (appController && typeof appController.handlePrimarySourceChanged === 'function') {
+            await appController.handlePrimarySourceChanged(sourcePath, options);
+        }
     }
 
-    folderPath1.textContent = FOLDER_PATH_PLACEHOLDER;
-    syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-    syncPrimaryFileListRegionVisibility();
-    syncFileListVisualRows(fileList1, 0);
-    startAnalysisBtn.disabled = true;
-    openResultsBtn.disabled = true;
-    saveAsBtn.disabled = true;
-
-    let preprocessFolderPath = '';
-    const stageCompletion = {
-        preprocess: false,
-        detection: false,
-        analysis: false
-    };
-    const runningScriptIds = {
-        preprocess: null,
-        detection: null,
-        analysis: null
-    };
-    const executionStageMap = new Map();
-    let activeScriptType = null;
-    const scriptLabelMap = {
-        preprocess: '预处理',
-        detection: '检测',
-        analysis: '分析'
-    };
-    const runtimeSubscribers = new Set();
-    let unsubscribeRuntimeState = null;
+    fileBrowser = fileBrowserApi.createFileBrowser({
+        electronAPI: window.electronAPI,
+        fileListVisibilityApi,
+        folderPathElements,
+        folderPathShell1,
+        fileListElements,
+        fileListRegion1,
+        placeholderText: FOLDER_PATH_PLACEHOLDER,
+        mediaPreview,
+        logMessage,
+        onPrimarySourceChanged: handlePrimarySourceChanged,
+        onPrimaryFileSelected() {
+            if (fileBrowser && typeof fileBrowser.syncPrimaryFileListRegionVisibility === 'function') {
+                fileBrowser.syncPrimaryFileListRegionVisibility(true);
+            }
+        }
+    });
 
     function getCurrentSourcePath() {
-        const value = folderPath1.textContent ? folderPath1.textContent.trim() : '';
-        return value && value !== FOLDER_PATH_PLACEHOLDER ? value : '';
-    }
-
-    function buildRuntimeSnapshot() {
-        return {
-            sourcePath: getCurrentSourcePath(),
-            preprocessFolderPath,
-            activeScriptType,
-            runningExecutions: {
-                preprocess: runningScriptIds.preprocess,
-                detection: runningScriptIds.detection,
-                analysis: runningScriptIds.analysis
-            },
-            stageCompletion: { ...stageCompletion }
-        };
-    }
-
-    function syncRuntimeStateToMain(snapshot) {
-        if (!window.electronAPI || typeof window.electronAPI.updateRuntimeState !== 'function') {
-            return;
+        if (appController && typeof appController.getCurrentSourcePath === 'function') {
+            return appController.getCurrentSourcePath();
         }
-
-        window.electronAPI.updateRuntimeState(snapshot).catch((error) => {
-            console.error('同步运行状态到主进程失败:', error);
-        });
+        return '';
     }
 
-    function publishRuntimeState(options = {}) {
-        const snapshot = buildRuntimeSnapshot();
-        runtimeSubscribers.forEach((listener) => {
-            try {
-                listener(snapshot);
-            } catch (error) {
-                console.error('运行状态订阅回调执行失败:', error);
+    stageController = stageControllerApi.createStageController({
+        electronAPI: window.electronAPI,
+        runtimeClient,
+        logMessage,
+        actionButtons,
+        getSourcePath: getCurrentSourcePath,
+        getScriptArgs() {
+            return scriptArgsInput ? scriptArgsInput.value.trim() : '';
+        },
+        getAnalysisArgs() {
+            return analysisScriptArgsInput ? analysisScriptArgsInput.value.trim() : '';
+        },
+        async onPreprocessStarted(preprocessFolderPath) {
+            await runtimeClient.update({ preprocessFolderPath });
+        },
+        async onPreprocessCompleted(preprocessFolderPath) {
+            if (!preprocessFolderPath) {
+                return;
             }
-        });
-
-        if (!options.skipMainSync) {
-            syncRuntimeStateToMain(snapshot);
-        }
-    }
-
-    function subscribeStageRuntimeState(listener) {
-        if (typeof listener !== 'function') {
-            return () => {};
-        }
-
-        runtimeSubscribers.add(listener);
-        listener(buildRuntimeSnapshot());
-
-        return () => {
-            runtimeSubscribers.delete(listener);
-        };
-    }
-
-    function applyActiveScriptUi(type) {
-        if (type) {
-            stopScriptBtn.disabled = false;
-            stopScriptBtn.textContent = `终止${scriptLabelMap[type]}进程`;
-        } else {
-            stopScriptBtn.disabled = true;
-            stopScriptBtn.textContent = '终止运行中的进程';
-        }
-    }
-
-    function applyRuntimeSnapshot(snapshot, options = {}) {
-        const normalized = normalizeRuntimeSnapshot(snapshot);
-
-        preprocessFolderPath = normalized.preprocessFolderPath;
-        activeScriptType = normalized.activeScriptType;
-        stageCompletion.preprocess = normalized.stageCompletion.preprocess;
-        stageCompletion.detection = normalized.stageCompletion.detection;
-        stageCompletion.analysis = normalized.stageCompletion.analysis;
-
-        runningScriptIds.preprocess = normalized.runningExecutions.preprocess;
-        runningScriptIds.detection = normalized.runningExecutions.detection;
-        runningScriptIds.analysis = normalized.runningExecutions.analysis;
-
-        applyActiveScriptUi(activeScriptType);
-
-        if (normalized.sourcePath) {
-            folderPath1.textContent = normalized.sourcePath;
-            syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-            syncPrimaryFileListStateFromSourcePath(normalized.sourcePath);
-            useFolderPathAsArg(normalized.sourcePath, { silent: true });
-            loadFilesFromFolder(normalized.sourcePath, 1);
-        } else {
-            folderPath1.textContent = FOLDER_PATH_PLACEHOLDER;
-            syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-            syncPrimaryFileListStateFromSourcePath('');
-            fileList1.innerHTML = '';
-            syncFileListVisualRows(fileList1, 0);
-            if (video1) {
-                video1.removeAttribute('src');
-                delete video1.dataset.originalPath;
-                video1.load();
-                syncVideoEmptyState(video1);
+            if (folderPathElements[1]) {
+                folderPathElements[1].textContent = preprocessFolderPath;
+                fileBrowser.syncFolderPathVisualState(folderPathElements[1], folderPathShell1);
             }
-            syncPrimaryFileListRegionVisibility();
-            if (startAnalysisBtn) startAnalysisBtn.disabled = true;
-            if (openResultsBtn) openResultsBtn.disabled = true;
-            if (saveAsBtn) saveAsBtn.disabled = true;
+            mediaPreview.resetPreview(1);
+            fileBrowser.syncPrimaryFileListStateFromSourcePath(preprocessFolderPath);
+            fileBrowser.syncPrimaryFileListRegionVisibility();
+            await fileBrowser.loadFilesFromFolder(preprocessFolderPath, 1);
+            await handlePrimarySourceChanged(preprocessFolderPath);
+            const snapshot = runtimeClient.getSnapshot();
+            await runtimeClient.update({
+                stageCompletion: {
+                    ...snapshot.stageCompletion,
+                    detection: false,
+                    analysis: false
+                }
+            });
+            logMessage(`输出: 预处理完成，文件浏览区域已更新为: ${preprocessFolderPath}`);
         }
+    });
 
-        publishRuntimeState({ skipMainSync: Boolean(options.skipMainSync) });
-    }
+    appController = appControllerApi.createAppController({
+        electronAPI: window.electronAPI,
+        runtimeClient,
+        fileBrowser,
+        mediaPreview,
+        stageController,
+        videos,
+        logMessage,
+        folderPathElements,
+        actionButtons,
+        toolDrawerElements,
+        scriptArgsInput,
+        analysisScriptArgsInput,
+        placeholderText: FOLDER_PATH_PLACEHOLDER
+    });
 
-    async function hydrateRuntimeStateFromMain() {
-        if (!window.electronAPI || typeof window.electronAPI.getRuntimeState !== 'function') {
-            publishRuntimeState();
-            return;
-        }
-
-        try {
-            const state = await window.electronAPI.getRuntimeState();
-            applyRuntimeSnapshot(state, { skipMainSync: true });
-        } catch (error) {
-            console.error('获取主进程运行状态失败:', error);
-            publishRuntimeState();
-        }
-    }
+    window.selectVideo = (playerId) => fileBrowser.selectVideo(playerId);
+    window.selectFolder = (playerId) => fileBrowser.selectFolder(playerId);
+    window.executePythonScript = (type) => stageController.executePythonScript(type);
+    window.stopPythonScript = () => stageController.stopPythonScript();
+    window.openPreprocessFolder = () => appController.openPreprocessFolder();
+    window.openResultsFolder = () => appController.openResultsFolder();
+    window.saveResultsAs = () => appController.saveResultsAs();
 
     window.stageRuntimeBridge = {
-        getSnapshot: buildRuntimeSnapshot,
-        subscribe: subscribeStageRuntimeState
-    };
-
-    if (window.electronAPI && typeof window.electronAPI.onRuntimeState === 'function') {
-        unsubscribeRuntimeState = window.electronAPI.onRuntimeState((snapshot) => {
-            applyRuntimeSnapshot(snapshot, { skipMainSync: true });
-        });
-    }
-
-    window.selectVideo = (playerId) => {
-        window.electronAPI.selectVideo({ playerId }).then(result => {
-            if (result.path) {
-                const videoElement = document.getElementById(`video${result.playerId}`);
-                // videoElement.src = `file://${result.path}`; // 原有逻辑
-                videoElement.dataset.originalPath = result.path;
-                videoElement.src = `file:///${result.path.replace(/\\/g, '/')}`; // 处理路径分隔符
-                syncVideoEmptyState(videoElement);
-                if (Number(result.playerId) === 1) {
-                    const folderPath = result.path.replace(/[/\\][^/\\]+$/, '');
-                    folderPath1.textContent = folderPath;
-                    syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-                    syncPrimaryFileListStateFromSourcePath(folderPath);
-                    loadFilesFromFolder(folderPath, 1);
-                }
-                logMessage(`播放器${result.playerId}加载视频: ${result.path}`);
-            }
-        }).catch(err => {
-            logMessage(`错误: ${err.message}`);
-        });
-    };
-
-    window.selectFolder = (playerId) => {
-        window.electronAPI.selectFolder({ playerId }).then(result => {
-            if (result.path) {
-                const folderPathElement = document.getElementById(`folderPath${result.playerId}`);
-                folderPathElement.textContent = result.path;
-                if (result.playerId === 1 || result.playerId === '1') {
-                    syncFolderPathVisualState(folderPathElement, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-                    syncPrimaryFileListStateFromSourcePath(result.path);
-                    if (video1) {
-                        video1.removeAttribute('src');
-                        delete video1.dataset.originalPath;
-                        video1.load();
-                        syncVideoEmptyState(video1);
-                    }
-                    fileList1.innerHTML = '';
-                    syncFileListVisualRows(fileList1, 0);
-                    syncPrimaryFileListRegionVisibility();
-
-                    stageCompletion.detection = false;
-                    stageCompletion.analysis = false;
-                    if (!preprocessFolderPath || result.path !== preprocessFolderPath) {
-                        stageCompletion.preprocess = false;
-                    }
-
-                    useFolderPathAsArg(result.path);
-                    publishRuntimeState();
-                }
-                logMessage(`播放器${result.playerId}设置文件夹: ${result.path}`);
-                loadFilesFromFolder(result.path, playerId);
-            }
-        }).catch(err => {
-            logMessage(`错误: ${err.message}`);
-        });
-    };
-
-    function useFolderPathAsArg(folderPath, options = {}) {
-        const scriptArgsInput = document.getElementById('scriptArgs');
-        const analysisScriptArgsInput = document.getElementById('analysisScriptArgs');
-
-        if (folderPath) {
-            const argString = `--vd ${folderPath} --sd ${folderPath}_output`;
-
-            if (scriptArgsInput) {
-                scriptArgsInput.value = argString;
-            }
-
-            if (analysisScriptArgsInput) {
-                analysisScriptArgsInput.value = argString;
-            }
-
-            if (!options.silent) {
-                logMessage(`参数已自动设置为: ${argString}`);
-            }
-
-            // 解锁行为学分析功能，无需先运行检测再进行分析
-            if (startAnalysisBtn) startAnalysisBtn.disabled = false;
-            if (openResultsBtn) openResultsBtn.disabled = false;
-            if (saveAsBtn) saveAsBtn.disabled = false;
-        }
-    }
-
-    function loadFilesFromFolder(folderPath, playerId) {
-        window.electronAPI.getFilesInFolder(folderPath).then(files => {
-            const fileListElement = document.getElementById(`fileList${playerId}`);
-            fileListElement.innerHTML = '';
-
-            if (files.length === 0) {
-                fileListElement.innerHTML = '<div class="file-empty-state">没有找到视频文件</div>';
-                syncFileListVisualRows(fileListElement, 0);
-                if (Number(playerId) === 1) {
-                    syncPrimaryFileListRegionVisibility();
-                }
-                return;
-            }
-
-            files.forEach(file => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                fileItem.textContent = file.name;
-                fileItem.addEventListener('click', () => {
-                    const videoElement = document.getElementById(`video${playerId}`);
-                    // videoElement.src = `file://${file.path}`; // 原有逻辑
-                    videoElement.dataset.originalPath = file.path;
-                    videoElement.src = `file:///${file.path.replace(/\\/g, '/')}`; // 处理路径分隔符
-                    syncVideoEmptyState(videoElement);
-                    if (Number(playerId) === 1) {
-                        syncPrimaryFileListRegionVisibility(true);
-                    }
-                    logMessage(`播放器${playerId}加载视频: ${file.name}`);
-                });
-                fileListElement.appendChild(fileItem);
-            });
-
-            syncFileListVisualRows(fileListElement, files.length);
-            if (Number(playerId) === 1) {
-                syncPrimaryFileListRegionVisibility();
-            }
-        }).catch(err => {
-            logMessage(`加载文件列表出错: ${err.message}`);
-            syncFileListVisualRows(fileListElement, 0);
-            if (Number(playerId) === 1) {
-                syncPrimaryFileListRegionVisibility();
-            }
-        });
-    }
-
-    function setActiveScript(type) {
-        activeScriptType = type;
-        applyActiveScriptUi(type);
-
-        publishRuntimeState();
-    }
-
-    window.executePythonScript = async (type) => {
-        if (activeScriptType && runningScriptIds[activeScriptType]) {
-            logMessage(`<span class="error-message">错误: 当前已有${scriptLabelMap[activeScriptType]}进程在运行</span>`);
-            return;
-        }
-
-        let scriptName = null;
-        let scriptModel = null;
-        let argsString = '';
-        let startBtn = null;
-
-        if (type === 'preprocess') {
-            const sourcePath = folderPath1.textContent;
-            if (!sourcePath || sourcePath === FOLDER_PATH_PLACEHOLDER) {
-                logMessage('<span class="error-message">错误: 请先选择源文件夹</span>');
-                return;
-            }
-
-            logMessage('请选择保存目录');
-            const result = await window.electronAPI.selectFolder({ playerId: 'preprocess' });
-            if (!result || !result.path) {
-                logMessage('<span class="error-message">取消预处理</span>');
-                return;
-            }
-
-            preprocessFolderPath = result.path;
-            publishRuntimeState();
-
-            scriptName = 'ZebrafishTool'; // 注意这里的脚本名称要和实际Python脚本对应
-            scriptModel = 'preprocess';
-            argsString = `--vd ${sourcePath} --sd ${preprocessFolderPath}`;
-            startBtn = document.getElementById('startPreprocessBtn');
-            logMessage(`预处理保存目录: ${preprocessFolderPath}`);
-        } else if (type === 'detection') {
-            scriptName = 'ZebrafishTool';
-            scriptModel = 'track';
-            const scriptArgsInput = document.getElementById('scriptArgs');
-            argsString = scriptArgsInput ? scriptArgsInput.value.trim() : '';
-            if (!argsString && folderPath1.textContent && folderPath1.textContent !== FOLDER_PATH_PLACEHOLDER) {
-                argsString = `--vd ${folderPath1.textContent} --sd ${folderPath1.textContent}_output`;
-            }
-            startBtn = document.getElementById('startDetectionBtn');
-        } else if (type === 'analysis') {
-            scriptName = 'ZebrafishTool';
-            scriptModel = 'anlys';
-            const analysisArgsInput = document.getElementById('analysisScriptArgs');
-            argsString = analysisArgsInput ? analysisArgsInput.value.trim() : '';
-            startBtn = document.getElementById('startAnalysisBtn');
-        } else {
-            return;
-        }
-
-        if (!scriptName || !startBtn) {
-            alert('内部错误：脚本配置不完整');
-            return;
-        }
-
-        const args = argsString.match(/(".*?"|'.*?'|[^"\s][^\s]*)/g) || [];
-        if (scriptModel) {
-            args.unshift(scriptModel);
-        }
-
-        // 添加调试信息，新增
-        console.log('发送给Python的参数数组:', args);
-        console.log('参数长度:', args.length);
-        console.log('第一个参数:', args[0]);
-        
-        logMessage(`运行脚本: ${scriptName} ${args.join(' ')}`);
-        
-        // 确保至少有一个参数（模式参数），新增
-        if (args.length === 0) {
-            logMessage('<span class="error-message">错误: 没有指定任何参数</span>');
-            startBtn.disabled = false;
-            return;
-        }
-
-        logMessage(`运行脚本: ${scriptName} ${args.join(' ')}`);
-
-        startBtn.disabled = true;
-        window.electronAPI.runPython({ scriptName, args })
-            .then(result => {
-                if (result.success) {
-                    resetRuntimeStateDownstreamCompletion({ stageCompletion }, type);
-                    runningScriptIds[type] = result.executionId;
-                    executionStageMap.set(result.executionId, type);
-                    logMessage(`脚本进程已启动, ID: ${result.executionId}`);
-                    setActiveScript(type);
-
-                    if (type === 'detection') {
-                        startAnalysisBtn.disabled = false;
-                        openResultsBtn.disabled = false;
-                        saveAsBtn.disabled = false;
-                    }
-
-                    if (type === 'preprocess') {
-                        logMessage('<span class="progress-message">预处理进行中，完成后将自动更新文件浏览区域...</span>');
-                    }
-                } else {
-                    logMessage(`脚本启动失败: ${result.error}`);
-                    startBtn.disabled = false;
-                    setActiveScript(null);
-                }
-            })
-            .catch(err => {
-                logMessage(`错误: ${err.message || JSON.stringify(err)}`);
-                startBtn.disabled = false;
-                setActiveScript(null);
-            });
-    };
-
-    window.stopPythonScript = () => {
-        if (!activeScriptType) {
-            logMessage('没有正在运行的脚本可供停止。');
-            return;
-        }
-
-        const executionId = runningScriptIds[activeScriptType];
-        if (!executionId) {
-            logMessage(`没有正在运行的'${activeScriptType}'脚本可供停止。`);
-            setActiveScript(null);
-            return;
-        }
-
-        logMessage(`正在请求终止${scriptLabelMap[activeScriptType]}进程: ${executionId}`);
-        stopScriptBtn.disabled = true;
-        stopScriptBtn.textContent = `终止${scriptLabelMap[activeScriptType]}进程中...`;
-
-        window.electronAPI.stopPythonScript(executionId)
-            .then(result => {
-                if (result.success) {
-                    logMessage(result.message);
-                } else {
-                    logMessage(`终止失败: ${result.message}`);
-                    setActiveScript(activeScriptType);
-                }
-            })
-            .catch(err => {
-                logMessage(`终止进程时出错: ${err.message}`);
-                setActiveScript(activeScriptType);
-            });
+        getSnapshot: () => runtimeClient.getSnapshot(),
+        subscribe: (listener) => runtimeClient.subscribe(listener)
     };
 
     window.electronAPI.onPythonOutput((data) => {
-        const { type, executionId, code } = data;
-        const outputText = typeof data.data === 'string' ? data.data.trim() : '';
-
-        let scriptType = executionStageMap.get(executionId) || null;
-        if (!scriptType) {
-            for (const key in runningScriptIds) {
-                if (runningScriptIds[key] === executionId) {
-                    scriptType = key;
-                    break;
-                }
-            }
-        }
-
-        switch (type) {
-            case 'stdout':
-                if (outputText) {
-                    logMessage(`输出: [${executionId}] ${outputText}`);
-                }
-                break;
-            case 'stderr':
-                if (outputText.includes('%') && (outputText.includes('|') || outputText.includes('it]'))) {
-                    logMessage(`进度: [${executionId}] ${outputText}`);
-                } else if (outputText) {
-                    logMessage(`错误: [${executionId}] ${outputText}`);
-                }
-                break;
-            case 'close': {
-                const exitCode = typeof code === 'number' ? code : -1;
-                if (exitCode === 0) {
-                    logMessage(`进度: [${executionId}] 进程完成，状态码: ${exitCode}`);
-                } else if (code === null || code === undefined) {
-                    logMessage(`进度: [${executionId}] 进程已被手动终止`);
-                } else {
-                    logMessage(`错误: [${executionId}] 进程异常退出，状态码: ${exitCode}`);
-                }
-
-                if (scriptType) {
-                    const btnSuffix = scriptType.charAt(0).toUpperCase() + scriptType.slice(1);
-                    const startBtn = document.getElementById(`start${btnSuffix}Btn`);
-                    if (startBtn) startBtn.disabled = false;
-
-                    if (exitCode === 0) {
-                        stageCompletion[scriptType] = true;
-                    }
-
-                    if (scriptType === 'preprocess' && preprocessFolderPath && exitCode === 0) {
-                        folderPath1.textContent = preprocessFolderPath;
-                        syncFolderPathVisualState(folderPath1, folderPathShell1, FOLDER_PATH_PLACEHOLDER);
-                        syncPrimaryFileListStateFromSourcePath(preprocessFolderPath);
-                        if (video1) {
-                            video1.removeAttribute('src');
-                            delete video1.dataset.originalPath;
-                            video1.load();
-                            syncVideoEmptyState(video1);
-                        }
-                        syncPrimaryFileListRegionVisibility();
-                        loadFilesFromFolder(preprocessFolderPath, 1);
-                        useFolderPathAsArg(preprocessFolderPath);
-                        stageCompletion.detection = false;
-                        stageCompletion.analysis = false;
-                        logMessage(`输出: 预处理完成，文件浏览区域已更新为: ${preprocessFolderPath}`);
-                    }
-
-                    runningScriptIds[scriptType] = null;
-                    executionStageMap.delete(executionId);
-                    if (activeScriptType === scriptType) {
-                        setActiveScript(null);
-                    } else {
-                        publishRuntimeState();
-                    }
-                }
-                break;
-            }
-            case 'error':
-                logMessage(`错误: [${executionId}] ${outputText || '未知错误'}`);
-                if (scriptType) {
-                    const btnSuffix = scriptType.charAt(0).toUpperCase() + scriptType.slice(1);
-                    const startBtn = document.getElementById(`start${btnSuffix}Btn`);
-                    if (startBtn) startBtn.disabled = false;
-                    runningScriptIds[scriptType] = null;
-                    executionStageMap.delete(executionId);
-                    if (activeScriptType === scriptType) {
-                        setActiveScript(null);
-                    } else {
-                        publishRuntimeState();
-                    }
-                }
-                break;
-        }
+        stageController.handlePythonOutput(data).catch((error) => {
+            logMessage(`错误: ${error.message}`);
+        });
     });
 
-    window.openPreprocessFolder = () => {
-        if (!preprocessFolderPath) {
-            logMessage('<span class="error-message">错误: 尚未执行预处理或未选择保存目录</span>');
+    [videos[1], videos[2]].forEach((videoElement, index) => {
+        if (!videoElement) {
             return;
         }
+        videoElement.addEventListener('play', () => logMessage(`播放器${index + 1}开始播放`));
+        videoElement.addEventListener('pause', () => logMessage(`播放器${index + 1}暂停播放`));
+    });
 
-        logMessage(`打开预处理文件夹: ${preprocessFolderPath}`);
-        window.electronAPI.openFolder(preprocessFolderPath)
-            .then(result => {
-                if (result.success) {
-                    logMessage(`<span class="output-message">${result.message}</span>`);
-                } else {
-                    logMessage(`<span class="error-message">错误: ${result.message}</span>`);
-                }
-            })
-            .catch(err => {
-                logMessage(`<span class="error-message">打开文件夹时出错: ${err.message}</span>`);
-            });
-    };
-
-    window.openResultsFolder = () => {
-        const folderPath = document.getElementById('folderPath1').textContent;
-        if (folderPath) {
-            const outputPath = `${folderPath}_output`;
-            logMessage(`尝试打开结果文件夹: ${outputPath}`);
-            window.electronAPI.openFolder(outputPath)
-                .then(result => {
-                    if (!result.success) {
-                        logMessage(`错误: ${result.error}`);
-                    }
-                })
-                .catch(err => {
-                    logMessage(`打开文件夹时出错: ${err.message}`);
-                });
-        } else {
-            alert('请先选择一个视频文件夹');
-        }
-    };
-
-    window.saveResultsAs = () => {
-        const folderPath = document.getElementById('folderPath1').textContent;
-        if (!folderPath) {
-            alert('请先选择一个视频文件夹');
-            return;
-        }
-
-        const sourcePath = `${folderPath}_output`;
-
-        window.electronAPI.selectFolder({ playerId: 'save' })
-            .then(result => {
-                if (result.path) {
-                    const targetPath = result.path;
-                    logMessage(`正在将结果保存到: ${targetPath}`);
-                    return window.electronAPI.saveResultsAs(sourcePath, targetPath);
-                }
-            })
-            .then(result => {
-                if (result && result.success) {
-                    logMessage(`结果保存成功!`);
-                } else if (result) {
-                    logMessage(`保存失败: ${result.error}`);
-                }
-            })
-            .catch(err => {
-                logMessage(`保存过程中出错: ${err.message}`);
-            });
-    };
-
-    logMessage('应用已启动，请选择视频文件或文件夹');
-
-    function logMessage(message) {
-        let className = '';
-
-        if (message.startsWith('错误:')) {
-            className = 'error-message';
-        } else if (message.startsWith('进度:')) {
-            className = 'progress-message';
-        } else if (message.startsWith('输出:')) {
-            className = 'output-message';
-        }
-
-        outputDiv.innerHTML += `<div class="${className}"> ${message}</div>`;
-        outputDiv.scrollTop = outputDiv.scrollHeight;
-    }
-
-    video1.addEventListener('play', () => logMessage('播放器1开始播放'));
-    video1.addEventListener('pause', () => logMessage('播放器1暂停播放'));
-    video2.addEventListener('play', () => logMessage('播放器2开始播放'));
-    video2.addEventListener('pause', () => logMessage('播放器2暂停播放'));
+    appController.initialize();
 
     window.addEventListener('beforeunload', () => {
-        if (typeof unsubscribeRuntimeState === 'function') {
-            unsubscribeRuntimeState();
-        }
+        appController.destroy();
     }, { once: true });
 
-    hydrateRuntimeStateFromMain();
+    runtimeClient.hydrateFromMain().then((snapshot) => {
+        if (snapshot.sourcePath) {
+            if (folderPathElements[1]) {
+                folderPathElements[1].textContent = snapshot.sourcePath;
+                fileBrowser.syncFolderPathVisualState(folderPathElements[1], folderPathShell1);
+            }
+            fileBrowser.syncPrimaryFileListStateFromSourcePath(snapshot.sourcePath);
+            fileBrowser.loadFilesFromFolder(snapshot.sourcePath, 1).catch((error) => {
+                logMessage(`加载文件列表出错: ${error.message}`);
+            });
+            handlePrimarySourceChanged(snapshot.sourcePath, { silent: true }).catch((error) => {
+                logMessage(`错误: ${error.message}`);
+            });
+        }
+        stageController.applyActiveScriptUi(snapshot.activeScriptType);
+    }).catch((error) => {
+        logMessage(`错误: ${error.message}`);
+    });
 
     logMessage('应用已启动，请选择视频文件或文件夹');
 });
