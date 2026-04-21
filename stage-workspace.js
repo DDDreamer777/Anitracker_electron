@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const stageControlApi = window.StageControls;
     const runtimeBridge = window.stageRuntimeBridge;
+    const runtimeStateApi = window.RuntimeState;
     const stageWorkspace = document.getElementById('stageWorkspace');
     const startPreprocessBtn = document.getElementById('startPreprocessBtn');
     const startDetectionBtn = document.getElementById('startDetectionBtn');
@@ -38,6 +39,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedStage = null;
     let unsubscribeRuntime = null;
 
+    function normalizeRuntimeSnapshot(snapshot) {
+        if (runtimeStateApi && typeof runtimeStateApi.normalizeRuntimeSnapshot === 'function') {
+            return runtimeStateApi.normalizeRuntimeSnapshot(snapshot);
+        }
+
+        return {
+            sourcePath: '',
+            preprocessFolderPath: '',
+            activeScriptType: null,
+            runningExecutions: {
+                preprocess: null,
+                detection: null,
+                analysis: null
+            },
+            stageCompletion: {
+                preprocess: false,
+                detection: false,
+                analysis: false
+            }
+        };
+    }
+
     function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, (char) => ({
             '&': '&amp;',
@@ -46,33 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
             '"': '&quot;',
             "'": '&#39;'
         }[char]));
-    }
-
-    function normalizeRuntimeSnapshot(snapshot) {
-        if (!snapshot || typeof snapshot !== 'object') {
-            return {
-                sourcePath: '',
-                preprocessFolderPath: '',
-                activeScriptType: null,
-                stageCompletion: {
-                    preprocess: false,
-                    detection: false,
-                    analysis: false
-                }
-            };
-        }
-
-        const completion = snapshot.stageCompletion || {};
-        return {
-            sourcePath: typeof snapshot.sourcePath === 'string' ? snapshot.sourcePath : '',
-            preprocessFolderPath: typeof snapshot.preprocessFolderPath === 'string' ? snapshot.preprocessFolderPath : '',
-            activeScriptType: typeof snapshot.activeScriptType === 'string' ? snapshot.activeScriptType : null,
-            stageCompletion: {
-                preprocess: Boolean(completion.preprocess),
-                detection: Boolean(completion.detection),
-                analysis: Boolean(completion.analysis)
-            }
-        };
     }
 
     function setSelectedStage(stageKey) {

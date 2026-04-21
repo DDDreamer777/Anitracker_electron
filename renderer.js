@@ -1,4 +1,25 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const runtimeStateApi = window.RuntimeState;
+    const normalizeRuntimeSnapshot = runtimeStateApi
+        ? runtimeStateApi.normalizeRuntimeSnapshot
+        : () => ({
+            sourcePath: '',
+            preprocessFolderPath: '',
+            activeScriptType: null,
+            runningExecutions: {
+                preprocess: null,
+                detection: null,
+                analysis: null
+            },
+            stageCompletion: {
+                preprocess: false,
+                detection: false,
+                analysis: false
+            }
+        });
+    const resetRuntimeStateDownstreamCompletion = runtimeStateApi
+        ? runtimeStateApi.resetDownstreamCompletion
+        : () => {};
     const video1 = document.getElementById('video1');
     const video2 = document.getElementById('video2');
     const outputDiv = document.getElementById('output');
@@ -268,34 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function normalizeRuntimeSnapshot(snapshot) {
-        const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
-        const completion = source.stageCompletion && typeof source.stageCompletion === 'object'
-            ? source.stageCompletion
-            : {};
-        const runningExecutions = source.runningExecutions && typeof source.runningExecutions === 'object'
-            ? source.runningExecutions
-            : {};
-
-        return {
-            sourcePath: typeof source.sourcePath === 'string' ? source.sourcePath : '',
-            preprocessFolderPath: typeof source.preprocessFolderPath === 'string' ? source.preprocessFolderPath : '',
-            activeScriptType: (source.activeScriptType === 'preprocess' || source.activeScriptType === 'detection' || source.activeScriptType === 'analysis')
-                ? source.activeScriptType
-                : null,
-            runningExecutions: {
-                preprocess: typeof runningExecutions.preprocess === 'string' ? runningExecutions.preprocess : null,
-                detection: typeof runningExecutions.detection === 'string' ? runningExecutions.detection : null,
-                analysis: typeof runningExecutions.analysis === 'string' ? runningExecutions.analysis : null
-            },
-            stageCompletion: {
-                preprocess: Boolean(completion.preprocess),
-                detection: Boolean(completion.detection),
-                analysis: Boolean(completion.analysis)
-            }
-        };
-    }
-
     function syncRuntimeStateToMain(snapshot) {
         if (!window.electronAPI || typeof window.electronAPI.updateRuntimeState !== 'function') {
             return;
@@ -332,25 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return () => {
             runtimeSubscribers.delete(listener);
         };
-    }
-
-    function resetDownstreamCompletion(stageKey) {
-        if (stageKey === 'preprocess') {
-            stageCompletion.preprocess = false;
-            stageCompletion.detection = false;
-            stageCompletion.analysis = false;
-            return;
-        }
-
-        if (stageKey === 'detection') {
-            stageCompletion.detection = false;
-            stageCompletion.analysis = false;
-            return;
-        }
-
-        if (stageKey === 'analysis') {
-            stageCompletion.analysis = false;
-        }
     }
 
     function applyActiveScriptUi(type) {
@@ -648,7 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.electronAPI.runPython({ scriptName, args })
             .then(result => {
                 if (result.success) {
-                    resetDownstreamCompletion(type);
+                    resetRuntimeStateDownstreamCompletion({ stageCompletion }, type);
                     runningScriptIds[type] = result.executionId;
                     executionStageMap.set(result.executionId, type);
                     logMessage(`脚本进程已启动, ID: ${result.executionId}`);
