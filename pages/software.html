@@ -2,7 +2,10 @@
 <html>
 <head>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; media-src 'self' 'unsafe-inline' file: blob: data:;">
-    <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/components.css">
+    <link rel="stylesheet" href="../styles/software.css">
+    <link rel="stylesheet" href="../styles/stage-workspace.css">
 </head>
 
 <body class="software-page">
@@ -109,7 +112,7 @@
                 <div class="stage-workspace-body">
                     <div class="stage-overview-shell">
                         <div class="stage-overview-illustration" aria-hidden="true">
-                            <img class="stage-overview-fish-image" src="assets/figures/fish3.png" alt="" />
+                            <img class="stage-overview-fish-image" src="../assets/figures/fish3.png" alt="" />
                         </div>
                         <div id="stageRail" class="stage-rail" aria-label="阶段选择器">
                             <button class="stage-selector-btn" type="button" data-stage-select="preprocess">
@@ -158,17 +161,17 @@
         <div id="output"></div>
     </div>
 
-    <script src="stage-definition.js"></script>
-    <script src="runtime-state.js"></script>
-    <script src="renderer/stage-controls.js"></script>
-    <script src="renderer/file-list-visibility.js"></script>
-    <script src="renderer/log-console.js"></script>
-    <script src="renderer/runtime-client.js"></script>
-    <script src="renderer/media-preview.js"></script>
-    <script src="renderer/file-browser.js"></script>
-    <script src="renderer/stage/stage-controller.js"></script>
-    <script src="renderer/app-controller.js"></script>
-    <script src="renderer.js"></script>
-    <script src="renderer/stage-workspace.js"></script>
+    <script src="../stage-definition.js"></script>
+    <script src="../runtime-state.js"></script>
+    <script src="../renderer/stage-controls.js"></script>
+    <script src="../renderer/file-list-visibility.js"></script>
+    <script src="../renderer/log-console.js"></script>
+    <script src="../renderer/runtime-client.js"></script>
+    <script src="../renderer/media-preview.js"></script>
+    <script src="../renderer/file-browser.js"></script>
+    <script src="../renderer/stage/stage-controller.js"></script>
+    <script src="../renderer/app-controller.js"></script>
+    <script src="../renderer.js"></script>
+    <script src="../renderer/stage-workspace.js"></script>
 </body>
 </html>

@@ -53,7 +53,7 @@ function createWindow() {
   // 窗口居中显示
   win.center()
   
-  win.loadFile('home.html')
+  win.loadFile('pages/home.html')
 }
 
 // [HW-INTEGRATION v2026.03.17] 创建树莓派硬件控制窗口

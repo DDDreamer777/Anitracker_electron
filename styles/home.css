@@ -1,0 +1,118 @@
+.home-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    padding: 32px;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(620px 420px at 18% 16%, rgba(255, 255, 255, 0.24), transparent 72%),
+        radial-gradient(520px 360px at 82% 18%, rgba(205, 217, 226, 0.16), transparent 70%);
+}
+
+.home-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(rgba(125, 136, 146, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125, 136, 146, 0.025) 1px, transparent 1px);
+    background-size: 52px 52px;
+    mask-image: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 1) 25%, rgba(0, 0, 0, 0) 84%);
+}
+
+.home-container::after {
+    content: "";
+    position: absolute;
+    right: 11%;
+    top: 12%;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0));
+    filter: blur(24px);
+    opacity: 0.56;
+}
+
+.home-header {
+    position: relative;
+    margin-top: 24px;
+    margin-left: 28px;
+    z-index: 10;
+    opacity: 0;
+    animation: app-surface-enter var(--app-entry-fade) var(--app-ease-emphasis) 40ms forwards;
+}
+
+/* Center Image Styles */
+.home-center-image-container {
+    flex-grow: 1; /* Take up available space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Prevent overflow if image is too large */
+    /* Remove padding to ensure true centering relative to viewport, not content area */
+    padding: 0; 
+    position: absolute; /* Position absolutely to center in container */
+    top: 0;
+    left: 0;
+    width: 100vw; /* Explicitly use viewport width */
+    height: 100vh; /* Explicitly use viewport height */
+    z-index: 0; /* Behind other elements */
+    pointer-events: none; /* Allow clicks to pass through to buttons if needed */
+}
+
+.home-center-image {
+    max-width: 90%;
+    max-height: 90vh;
+    object-fit: contain;
+    opacity: 0.82;
+    filter: drop-shadow(0 34px 56px rgba(113, 126, 137, 0.15)) saturate(0.82) hue-rotate(8deg);
+    animation: app-surface-enter calc(var(--app-entry-fade) + 80ms) var(--app-ease-standard) 90ms both;
+}
+
+.home-title {
+    margin: 0;
+    font-size: 2em;
+}
+
+.home-title-img {
+    height: 128px;
+    width: auto;
+    display: block;
+    margin-bottom: 5px;
+    filter: grayscale(0.24) saturate(0.72) hue-rotate(8deg) brightness(0.9) contrast(0.92) drop-shadow(0 14px 28px rgba(120, 132, 143, 0.12));
+    opacity: 0.9;
+}
+
+.home-subtitle {
+    margin-top: 10px;
+    font-size: 1em;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.home-action-area-right {
+    position: absolute;
+    bottom: 56px;
+    right: 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-end;
+    z-index: 2;
+    opacity: 0;
+    animation: app-surface-enter var(--app-entry-fade) var(--app-ease-emphasis) 120ms forwards;
+}
+
+.home-action-area-left {
+    position: absolute;
+    bottom: 56px;
+    left: 56px;
+    z-index: 2;
+    opacity: 0;
+    animation: app-surface-enter var(--app-entry-fade) var(--app-ease-emphasis) 180ms forwards;
+}

@@ -1,0 +1,115 @@
+:root {
+    --background-color: #f4efe6;
+    --panel-background-color: rgba(255, 252, 247, 0.56);
+    --border-color: rgba(202, 191, 177, 0.6);
+    --text-color: #545a61;
+    --input-background: rgba(255, 250, 245, 0.72);
+    --button-background: linear-gradient(180deg, rgba(251, 248, 243, 0.86), rgba(239, 233, 226, 0.88));
+    --button-hover-background: linear-gradient(180deg, rgba(253, 250, 246, 0.92), rgba(241, 235, 228, 0.92));
+    --hover-background: rgba(255, 255, 255, 0.32);
+    --error-color: #b48282;
+    --progress-color: #8f9aa8;
+    --output-color: #778f83;
+    --app-display-font: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+    --app-body-font: "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei UI", sans-serif;
+    --app-panel-radius: 24px;
+    --app-control-radius: 16px;
+    --app-pill-radius: 999px;
+    --app-shadow-soft: 0 18px 36px rgba(112, 123, 132, 0.08);
+    --app-shadow-strong: 0 28px 56px rgba(112, 123, 132, 0.12);
+    --app-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    --app-motion-fast: 180ms;
+    --app-motion-medium: 240ms;
+    --app-motion-slow: 420ms;
+    --app-ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --app-ease-emphasis: cubic-bezier(0.2, 0.9, 0.2, 1);
+    --app-hover-lift: -2px;
+    --app-press-scale: 0.985;
+    --app-pulse-duration: 2.4s;
+    --app-entry-distance: 14px;
+    --app-entry-fade: 520ms;
+    --app-stagger-step: 70ms;
+}
+
+body.home-page {
+    --background-color: #edf1f4;
+    --panel-background-color: rgba(247, 249, 251, 0.68);
+    --border-color: rgba(196, 203, 208, 0.42);
+    --text-color: #5f6870;
+    --input-background: rgba(245, 248, 250, 0.82);
+    --button-background: linear-gradient(180deg, rgba(250, 251, 252, 0.86), rgba(241, 244, 246, 0.9));
+    --button-hover-background: linear-gradient(180deg, rgba(252, 253, 253, 0.92), rgba(243, 246, 248, 0.94));
+    --hover-background: rgba(255, 255, 255, 0.42);
+    --error-color: #a97f88;
+    --progress-color: #7d90a1;
+    --output-color: #6f8b80;
+}
+
+body.home-page {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background:
+        radial-gradient(720px 480px at 14% 12%, rgba(255, 255, 255, 0.62), transparent 72%),
+        radial-gradient(760px 520px at 86% 78%, rgba(193, 205, 214, 0.2), transparent 68%),
+        radial-gradient(900px 620px at -10% 100%, rgba(210, 219, 226, 0.22), transparent 74%),
+        linear-gradient(142deg, #edf1f4 0%, #e3e9ee 100%);
+    color: var(--text-color);
+}
+
+body.software-page {
+    --background-color: #edf1f4;
+    --panel-background-color: rgba(247, 249, 251, 0.68);
+    --border-color: rgba(196, 203, 208, 0.42);
+    --text-color: #5f6870;
+    --input-background: rgba(245, 248, 250, 0.82);
+    --button-background: linear-gradient(180deg, rgba(250, 251, 252, 0.86), rgba(241, 244, 246, 0.9));
+    --button-hover-background: linear-gradient(180deg, rgba(252, 253, 253, 0.92), rgba(243, 246, 248, 0.94));
+    --hover-background: rgba(255, 255, 255, 0.42);
+    --error-color: #a97f88;
+    --progress-color: #7d90a1;
+    --output-color: #6f8b80;
+}
+
+body.software-page {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background:
+        radial-gradient(720px 480px at 14% 12%, rgba(255, 255, 255, 0.62), transparent 72%),
+        radial-gradient(760px 520px at 86% 78%, rgba(193, 205, 214, 0.2), transparent 68%),
+        radial-gradient(900px 620px at -10% 100%, rgba(210, 219, 226, 0.22), transparent 74%),
+        linear-gradient(142deg, #edf1f4 0%, #e3e9ee 100%);
+    color: var(--text-color);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background:
+        radial-gradient(680px 460px at 14% 12%, rgba(255, 255, 255, 0.58), transparent 72%),
+        radial-gradient(760px 520px at 86% 78%, rgba(201, 209, 214, 0.14), transparent 68%),
+        radial-gradient(900px 620px at -10% 100%, rgba(218, 202, 184, 0.18), transparent 74%),
+        linear-gradient(142deg, #f4efe6 0%, #ece6dc 100%);
+    color: var(--text-color);
+    font-family: var(--app-body-font);
+    overflow: hidden;
+}
+
+@keyframes app-surface-enter {
+    from {
+        opacity: 0;
+        transform: translateY(var(--app-entry-distance)) scale(0.992);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}

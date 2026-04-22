@@ -1,0 +1,397 @@
+/* Hardware route page: misty silver blue-gray visual system */
+.hardware-route-page {
+    --hw-bg-a: #edf1f4;
+    --hw-bg-b: #e3e9ee;
+    --hw-text-main: #1c2228;
+    --hw-text-sub: #59636c;
+    --hw-text-muted: #8d97a0;
+    --hw-card-border: rgba(255, 255, 255, 0.82);
+    --hw-card-bg: linear-gradient(165deg, rgba(250, 251, 252, 0.8), rgba(240, 244, 247, 0.92));
+    --hw-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(245, 248, 250, 0.16));
+    --hw-panel-border: rgba(255, 255, 255, 0.46);
+    --hw-shadow-panel: 0 30px 80px rgba(108, 120, 130, 0.1);
+    --hw-shadow-soft: 0 38px 80px rgba(101, 113, 123, 0.13);
+    --hw-shadow-tight: 0 16px 34px rgba(107, 118, 127, 0.1);
+    --hw-accent: #8799aa;
+    --hw-success: #789788;
+    --hw-error: #b2858c;
+    --hw-idle: #a7b0b8;
+    --hw-btn-ink: #4f5a63;
+    --hw-btn-border: rgba(196, 203, 208, 0.72);
+    --hw-btn-bg: linear-gradient(180deg, rgba(252, 253, 253, 0.94), rgba(241, 244, 246, 0.96));
+    --hw-focus-amber: rgba(166, 181, 195, 0.14);
+    font-family: var(--app-body-font);
+    overflow: hidden;
+    background:
+        radial-gradient(620px 420px at 12% 10%, rgba(255, 255, 255, 0.64), transparent 72%),
+        radial-gradient(700px 520px at 88% 82%, rgba(193, 205, 214, 0.24), transparent 68%),
+        radial-gradient(820px 560px at -8% 100%, rgba(210, 219, 226, 0.24), transparent 74%),
+        linear-gradient(140deg, var(--hw-bg-a) 0%, var(--hw-bg-b) 100%);
+    color: var(--hw-text-main);
+}
+
+.hardware-route-page .back-button {
+    border-color: rgba(255, 255, 255, 0.82);
+    background: linear-gradient(180deg, rgba(250, 251, 252, 0.8), rgba(241, 244, 246, 0.84));
+    color: #68727b;
+    box-shadow: var(--hw-shadow-tight), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+}
+
+.hardware-route-page .back-button:hover {
+    border-color: rgba(196, 203, 208, 0.86);
+    background: linear-gradient(180deg, rgba(252, 253, 253, 0.9), rgba(243, 246, 248, 0.92));
+    box-shadow: 0 18px 30px rgba(107, 118, 127, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.94);
+    transform: translateY(var(--app-hover-lift));
+}
+
+.hardware-route-page .back-button:focus-visible {
+    outline: 2px solid rgba(161, 178, 193, 0.52);
+}
+
+.hardware-route-page::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(rgba(125, 136, 146, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125, 136, 146, 0.03) 1px, transparent 1px);
+    background-size: 52px 52px;
+    mask-image: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 1) 25%, rgba(0, 0, 0, 0) 84%);
+}
+
+.hardware-route-page::after {
+    content: "";
+    position: fixed;
+    right: 10%;
+    top: 16%;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0));
+    filter: blur(18px);
+    opacity: 0.68;
+    animation: hardware-ambient-float calc(var(--app-pulse-duration) * 3.3) ease-in-out infinite;
+}
+
+.hardware-route-shell {
+    min-height: 100vh;
+    width: 100%;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.hardware-route-panel {
+    width: min(760px, calc(100vw - 48px));
+    position: relative;
+    border-radius: calc(var(--app-panel-radius) + 6px);
+    padding: 26px;
+    background: var(--hw-panel-bg);
+    border: 1px solid var(--hw-panel-border);
+    box-shadow: var(--hw-shadow-panel);
+    backdrop-filter: blur(14px);
+}
+
+.hardware-route-panel::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border-radius: var(--app-panel-radius);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    pointer-events: none;
+}
+
+.hardware-route-card {
+    padding: 36px 36px 28px;
+    border-radius: var(--app-panel-radius);
+    border: 1px solid var(--hw-card-border);
+    background: var(--hw-card-bg);
+    box-shadow: var(--hw-shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(226, 217, 205, 0.32);
+    backdrop-filter: blur(14px);
+    position: relative;
+    overflow: hidden;
+    animation: hardware-card-enter var(--app-entry-fade) var(--app-ease-emphasis) both;
+}
+
+.hardware-route-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(120deg, rgba(255, 255, 255, 0.48), transparent 36%),
+        radial-gradient(220px 120px at 88% 4%, rgba(255, 255, 255, 0.26), transparent 78%),
+        radial-gradient(280px 120px at 0% 100%, rgba(234, 227, 217, 0.5), transparent 76%);
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+.hardware-route-card::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 23px;
+    border: 1px solid rgba(255, 255, 255, 0.36);
+    pointer-events: none;
+}
+
+.hardware-status-topline,
+.hardware-status-title,
+.hardware-status-detail,
+.hardware-route-actions {
+    position: relative;
+    z-index: 1;
+}
+
+.hardware-status-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 34px;
+}
+
+.hardware-status-meta-corner {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+}
+
+.hardware-status-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 34px;
+}
+
+.hardware-signal-orbit {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.56);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84), 0 8px 16px rgba(114, 125, 134, 0.1);
+}
+
+.hardware-kicker {
+    margin: 0;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: #7e8891;
+    font-weight: 700;
+}
+
+.hardware-signal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--hw-accent);
+    box-shadow: 0 0 0 0 rgba(135, 153, 170, 0.22);
+}
+
+.hardware-status-title {
+    margin: 20px 0 12px;
+    font-family: var(--app-display-font);
+    font-size: clamp(32px, 4vw, 40px);
+    line-height: 1.16;
+    letter-spacing: 0.02em;
+    color: var(--hw-text-main);
+    font-weight: 700;
+    text-wrap: balance;
+}
+
+.hardware-status-detail {
+    margin: 0;
+    max-width: 540px;
+    font-size: 17px;
+    color: var(--hw-text-sub);
+    line-height: 1.76;
+}
+
+.hardware-status-meta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 9px 13px;
+    border-radius: var(--app-pill-radius);
+    background: rgba(255, 255, 255, 0.46);
+    border: 1px solid rgba(212, 220, 226, 0.88);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    color: var(--hw-text-muted);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.hardware-route-actions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 24px;
+}
+
+.hardware-open-button {
+    min-width: 236px;
+    border-radius: var(--app-pill-radius);
+    border-color: var(--hw-btn-border);
+    color: var(--hw-btn-ink);
+    background: var(--hw-btn-bg);
+    box-shadow: 0 14px 30px rgba(108, 120, 130, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.94);
+    transition:
+        transform var(--app-motion-fast) var(--app-ease-standard),
+        box-shadow var(--app-motion-fast) var(--app-ease-standard),
+        border-color var(--app-motion-fast) var(--app-ease-standard),
+        filter var(--app-motion-fast) var(--app-ease-standard);
+    position: relative;
+    overflow: hidden;
+}
+
+.hardware-open-button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.46) 46%, transparent 74%);
+    transform: translateX(-120%);
+    animation: hardware-button-sheen calc(var(--app-pulse-duration) * 1.6) ease-in-out infinite;
+    pointer-events: none;
+}
+
+.hardware-open-button:hover:not(:disabled) {
+    transform: translateY(var(--app-hover-lift));
+    border-color: rgba(180, 190, 198, 0.72);
+    box-shadow: 0 18px 34px rgba(108, 120, 130, 0.16), 0 0 0 3px var(--hw-focus-amber);
+    filter: saturate(1.02);
+}
+
+.hardware-open-button:active:not(:disabled) {
+    transform: translateY(0) scale(var(--app-press-scale));
+}
+
+.hardware-open-button:disabled {
+    opacity: 0.76;
+    cursor: wait;
+}
+
+.hardware-route-page[data-hardware-state="loading"] .hardware-signal-dot {
+    background: var(--hw-accent);
+    animation: hardware-dot-pulse var(--app-pulse-duration) ease-in-out infinite;
+}
+
+.hardware-route-page[data-hardware-state="success"] .hardware-signal-dot {
+    background: var(--hw-success);
+    box-shadow: 0 0 0 8px rgba(106, 146, 127, 0.16);
+}
+
+.hardware-route-page[data-hardware-state="error"] .hardware-signal-dot {
+    background: var(--hw-error);
+    box-shadow: 0 0 0 8px rgba(183, 121, 121, 0.14);
+}
+
+.hardware-route-page[data-hardware-state="idle"] .hardware-signal-dot,
+.hardware-route-page[data-hardware-state="closed"] .hardware-signal-dot {
+    background: var(--hw-idle);
+}
+
+.hardware-route-page[data-hardware-state="error"] .hardware-route-card {
+    border-color: rgba(189, 153, 160, 0.54);
+    box-shadow: var(--hw-shadow-soft), 0 0 0 1px rgba(178, 134, 143, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.hardware-route-page[data-hardware-state="success"] .hardware-route-card {
+    border-color: rgba(150, 172, 160, 0.5);
+    box-shadow: var(--hw-shadow-soft), 0 0 18px rgba(120, 151, 136, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+@keyframes hardware-card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.992);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes hardware-dot-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(135, 153, 170, 0.22);
+        opacity: 0.92;
+    }
+    68% {
+        box-shadow: 0 0 0 12px rgba(135, 153, 170, 0);
+        opacity: 1;
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(135, 153, 170, 0);
+        opacity: 0.92;
+    }
+}
+
+@keyframes hardware-button-sheen {
+    0%, 55%, 100% {
+        transform: translateX(-120%);
+    }
+    72% {
+        transform: translateX(120%);
+    }
+}
+
+@keyframes hardware-ambient-float {
+    0%, 100% {
+        transform: translate3d(0, 0, 0);
+    }
+    50% {
+        transform: translate3d(-10px, 12px, 0);
+    }
+}
+
+@media (max-width: 760px) {
+    .hardware-route-shell {
+        padding: 16px;
+    }
+
+    .hardware-route-panel {
+        width: min(760px, calc(100vw - 32px));
+        padding: 14px;
+        border-radius: 22px;
+    }
+
+    .hardware-route-card {
+        padding: 24px 20px 20px;
+        border-radius: 20px;
+    }
+
+    .hardware-status-topline {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .hardware-status-meta-corner {
+        justify-content: flex-start;
+    }
+
+    .hardware-status-meta {
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .hardware-route-actions {
+        align-items: stretch;
+    }
+
+    .hardware-open-button {
+        width: 100%;
+        min-width: 0;
+    }
+}

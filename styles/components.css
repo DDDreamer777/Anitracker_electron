@@ -1,0 +1,544 @@
+button {
+    background: var(--button-background);
+    color: var(--text-color);
+    border: 1px solid rgba(201, 191, 178, 0.44);
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 14px;
+    box-shadow: 0 8px 18px rgba(98, 86, 70, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    transition:
+        background-color var(--app-motion-fast) var(--app-ease-standard),
+        border-color var(--app-motion-fast) var(--app-ease-standard),
+        box-shadow var(--app-motion-fast) var(--app-ease-standard),
+        transform var(--app-motion-fast) var(--app-ease-standard);
+}
+
+button:hover {
+    background: var(--button-hover-background);
+    border-color: rgba(193, 183, 170, 0.56);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.script-input {
+    width: 150px;
+    margin-right: 10px;
+    padding: 5px;
+    background: rgba(255, 250, 245, 0.74);
+    border: 1px solid rgba(201, 191, 178, 0.44);
+    color: var(--text-color);
+    border-radius: 12px;
+}
+
+.error-message {
+    color: var(--error-color);
+}
+
+.progress-message {
+    color: var(--progress-color);
+}
+
+.output-message {
+    color: var(--output-color);
+}
+
+/* New Back Button Style */
+.back-button,
+.folder-select-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0;
+    min-height: 36px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(201, 191, 178, 0.44);
+    background: linear-gradient(180deg, rgba(251, 248, 243, 0.76), rgba(240, 234, 226, 0.8));
+    color: #686157;
+    font-size: 13px;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    box-shadow: 0 8px 18px rgba(98, 86, 70, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition:
+        transform var(--app-motion-fast) var(--app-ease-standard),
+        box-shadow var(--app-motion-fast) var(--app-ease-standard),
+        border-color var(--app-motion-fast) var(--app-ease-standard),
+        background-color var(--app-motion-fast) var(--app-ease-standard);
+    white-space: nowrap;
+}
+
+.software-page button,
+.software-page .folder-select-btn {
+    border-color: rgba(196, 203, 208, 0.44);
+    background: linear-gradient(180deg, rgba(250, 251, 252, 0.82), rgba(241, 244, 246, 0.88));
+    color: #66717a;
+    box-shadow: 0 8px 18px rgba(112, 123, 132, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.software-page button:hover:not(:disabled),
+.software-page .folder-select-btn:hover:not(:disabled) {
+    border-color: rgba(180, 190, 198, 0.56);
+    background: linear-gradient(180deg, rgba(252, 253, 253, 0.88), rgba(243, 246, 248, 0.92));
+    box-shadow: 0 10px 20px rgba(112, 123, 132, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+.software-page button:focus-visible,
+.software-page .folder-select-btn:focus-visible {
+    outline: 2px solid rgba(161, 178, 193, 0.68);
+    outline-offset: 2px;
+}
+
+.back-button:hover,
+.folder-select-btn:hover {
+    transform: translateY(var(--app-hover-lift));
+    border-color: rgba(193, 183, 170, 0.56);
+    background: linear-gradient(180deg, rgba(253, 250, 246, 0.84), rgba(242, 236, 229, 0.86));
+    box-shadow: 0 10px 20px rgba(98, 86, 70, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+.back-button:active,
+.folder-select-btn:active {
+    transform: translateY(0) scale(var(--app-press-scale));
+}
+
+.back-button:focus-visible,
+.folder-select-btn:focus-visible {
+    outline: 2px solid rgba(189, 171, 146, 0.7);
+    outline-offset: 2px;
+}
+
+.back-button:disabled,
+.folder-select-btn:disabled {
+    opacity: 0.72;
+    cursor: not-allowed;
+}
+
+.back-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+}
+
+.back-button-icon {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+    flex-shrink: 0;
+    transform: translateX(-0.5px);
+}
+
+.software-page .top-left-actions {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 1000;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.software-page .top-left-actions button {
+    margin-right: 0;
+}
+
+.software-page .top-left-actions > * {
+    margin: 0;
+}
+
+.software-page .back-button {
+    position: static;
+    margin: 0;
+}
+
+.software-page .help-hint {
+    --guide-bg: rgba(242, 245, 247, 0.96);
+    --guide-bg-soft: rgba(250, 251, 252, 0.98);
+    --guide-border: rgba(196, 203, 208, 0.4);
+    --guide-text-main: #59636c;
+    --guide-text-sub: #8e98a1;
+    --guide-chip-bg: rgba(255, 255, 255, 0.58);
+    --guide-chip-border: rgba(196, 203, 208, 0.42);
+    --guide-focus-ring: rgba(161, 178, 193, 0.16);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.software-page .toolbox-hint {
+    --tool-drawer-bg: rgba(241, 244, 246, 0.98);
+    --tool-drawer-border: rgba(196, 203, 208, 0.4);
+    --tool-drawer-btn-width: 92px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.software-page .help-hint::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 100%;
+    width: 100%;
+    height: 10px;
+}
+
+.software-page .toolbox-hint::after {
+    content: "";
+    position: absolute;
+    left: 100%;
+    top: 0;
+    width: 10px;
+    height: 100%;
+}
+
+.software-page .top-left-actions .back-button,
+.software-page .help-button,
+.software-page .toolbox-button {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    border: 1px solid rgba(196, 203, 208, 0.4);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(250, 251, 252, 0.82) 0%, rgba(241, 244, 246, 0.86) 100%);
+    color: #66717a;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 18px rgba(112, 123, 132, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    transition:
+        transform var(--app-motion-fast) var(--app-ease-standard),
+        border-color var(--app-motion-fast) var(--app-ease-standard),
+        box-shadow var(--app-motion-fast) var(--app-ease-standard),
+        background-color var(--app-motion-fast) var(--app-ease-standard);
+    cursor: pointer;
+    opacity: 0.96;
+}
+
+.software-page .help-button-icon {
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
+}
+
+.software-page .back-button-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.software-page .toolbox-button-icon {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: translateX(-1px) translateY(0.55px);
+}
+
+.software-page .toolbox-button {
+    cursor: pointer;
+}
+
+.software-page .top-left-actions .back-button:hover,
+.software-page .help-button:hover,
+.software-page .toolbox-button:hover,
+.software-page .toolbox-button[aria-expanded="true"] {
+    border-color: rgba(180, 190, 198, 0.56);
+    background: linear-gradient(180deg, rgba(252, 253, 253, 0.88) 0%, rgba(243, 246, 248, 0.92) 100%);
+    box-shadow: 0 10px 20px rgba(112, 123, 132, 0.09);
+    transform: translateY(var(--app-hover-lift));
+    opacity: 1;
+}
+
+.software-page .top-left-actions .back-button:focus-visible,
+.software-page .help-button:focus-visible,
+.software-page .toolbox-button:focus-visible {
+    outline: 2px solid rgba(161, 178, 193, 0.68);
+    outline-offset: 2px;
+    box-shadow: 0 10px 20px rgba(112, 123, 132, 0.09), 0 0 0 4px var(--guide-focus-ring);
+    opacity: 1;
+}
+
+.software-page .tool-drawer {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 10px);
+    width: max-content;
+    min-width: 0;
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid var(--tool-drawer-border);
+    background: linear-gradient(180deg, var(--tool-drawer-bg) 0%, rgba(238, 242, 245, 0.98) 100%);
+    box-shadow: 0 14px 30px rgba(112, 123, 132, 0.1);
+    backdrop-filter: blur(10px);
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+    z-index: 1020;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(calc(var(--app-entry-distance) * -0.7), -50%) scale(0.985);
+    transition:
+        opacity var(--app-motion-fast) var(--app-ease-standard),
+        transform var(--app-motion-medium) var(--app-ease-emphasis),
+        visibility var(--app-motion-fast) var(--app-ease-standard);
+}
+
+.software-page .toolbox-hint.is-open .tool-drawer {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translate(0, -50%) scale(1);
+}
+
+.software-page .tool-drawer-btn {
+    width: var(--tool-drawer-btn-width);
+    margin-right: 0;
+    min-height: 30px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(196, 203, 208, 0.4);
+    background: linear-gradient(180deg, rgba(250, 251, 252, 0.8) 0%, rgba(241, 244, 246, 0.86) 100%);
+    color: #68727b;
+    font-size: 12px;
+    line-height: 1.2;
+    text-align: center;
+    justify-content: center;
+    box-shadow: none;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(calc(var(--app-entry-distance) * -0.45));
+    transition:
+        opacity var(--app-motion-fast) var(--app-ease-standard),
+        transform var(--app-motion-medium) var(--app-ease-emphasis),
+        background-color var(--app-motion-fast) var(--app-ease-standard),
+        border-color var(--app-motion-fast) var(--app-ease-standard),
+        box-shadow var(--app-motion-fast) var(--app-ease-standard);
+}
+
+.software-page .tool-drawer-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, rgba(252, 253, 253, 0.86) 0%, rgba(243, 246, 248, 0.92) 100%);
+    border-color: rgba(180, 190, 198, 0.56);
+    transform: translateY(var(--app-hover-lift));
+    box-shadow: 0 10px 20px rgba(112, 123, 132, 0.08);
+}
+
+.software-page .tool-drawer-btn:focus-visible {
+    outline: 2px solid rgba(161, 178, 193, 0.68);
+    outline-offset: 1px;
+}
+
+.software-page .tool-drawer-btn:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+}
+
+.software-page .toolbox-hint.is-open .tool-drawer-btn {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.software-page .toolbox-hint.is-open .tool-drawer-btn:nth-child(1) {
+    transition-delay: 0ms;
+}
+
+.software-page .toolbox-hint.is-open .tool-drawer-btn:nth-child(2) {
+    transition-delay: var(--app-stagger-step);
+}
+
+.software-page .toolbox-hint.is-open .tool-drawer-btn:nth-child(3) {
+    transition-delay: calc(var(--app-stagger-step) * 2);
+}
+
+.software-page .toolbox-hint.is-open .tool-drawer-btn:nth-child(4) {
+    transition-delay: calc(var(--app-stagger-step) * 3);
+}
+
+.software-page .guide-tooltip {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: min(390px, calc(100vw - 24px));
+    padding: 13px 14px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--guide-border);
+    background: linear-gradient(180deg, var(--guide-bg-soft) 0%, var(--guide-bg) 100%);
+    box-shadow: 0 14px 30px rgba(98, 86, 70, 0.1);
+    color: var(--guide-text-main);
+    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(calc(var(--app-entry-distance) * 0.35));
+    transition:
+        opacity var(--app-motion-fast) var(--app-ease-standard),
+        transform var(--app-motion-medium) var(--app-ease-emphasis),
+        visibility var(--app-motion-fast) var(--app-ease-standard);
+}
+
+.software-page .guide-tooltip::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 16px;
+    width: 10px;
+    height: 10px;
+    border-top: 1px solid var(--guide-border);
+    border-left: 1px solid var(--guide-border);
+    background: var(--guide-bg-soft);
+    transform: rotate(45deg);
+}
+
+.software-page .guide-tooltip h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #5f6870;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(196, 203, 208, 0.36);
+}
+
+.software-page .guide-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 7px;
+}
+
+.software-page .guide-steps li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    align-items: start;
+    column-gap: 8px;
+}
+
+.software-page .guide-step-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin-top: 0;
+    border-radius: 999px;
+    border: 1px solid var(--guide-chip-border);
+    background: var(--guide-chip-bg);
+    color: #85919a;
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-family: "Segoe UI", sans-serif;
+}
+
+.software-page .guide-steps li span:last-child {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #66717a;
+    padding-top: 1px;
+}
+
+.software-page .help-hint:hover .guide-tooltip,
+.software-page .help-hint:focus-within .guide-tooltip {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-header,
+    .home-center-image,
+    .home-action-area-right,
+    .home-action-area-left,
+    .grid-container,
+    .software-page .help-button,
+    .software-page .toolbox-button,
+    .software-page .guide-tooltip,
+    .software-page .tool-drawer,
+    .software-page .tool-drawer-btn,
+    .stage-selector-btn,
+    .stage-detail-panel,
+    .stage-action-btn,
+    .hardware-route-card,
+    .hardware-open-button,
+    .hardware-route-page::after,
+    .hardware-route-page[data-hardware-state="loading"] .hardware-signal-dot {
+        animation: none;
+        transition: none;
+    }
+
+    .main-entry-button,
+    .back-button,
+    .folder-select-btn,
+    button,
+    .file-item {
+        transition: none;
+    }
+}
+
+.main-entry-button {
+    padding: 17px 44px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    width: auto;
+    min-width: 188px;
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    color: #66717a;
+    background: linear-gradient(180deg, rgba(250, 251, 252, 0.78), rgba(241, 244, 246, 0.82));
+    border: 1px solid rgba(196, 203, 208, 0.42);
+    border-radius: var(--app-pill-radius);
+    box-shadow: 0 8px 18px rgba(112, 123, 132, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    transition:
+        transform var(--app-motion-fast) var(--app-ease-standard),
+        box-shadow var(--app-motion-fast) var(--app-ease-standard),
+        border-color var(--app-motion-fast) var(--app-ease-standard),
+        filter var(--app-motion-fast) var(--app-ease-standard),
+        background var(--app-motion-fast) var(--app-ease-standard),
+        color var(--app-motion-fast) var(--app-ease-standard);
+}
+
+.main-entry-button:hover:not(:disabled) {
+    transform: translateY(var(--app-hover-lift));
+    background: linear-gradient(180deg, rgba(252, 253, 253, 0.88), rgba(243, 246, 248, 0.9));
+    border-color: rgba(180, 190, 198, 0.56);
+    box-shadow: 0 12px 22px rgba(112, 123, 132, 0.1), 0 0 0 2px rgba(166, 181, 195, 0.06);
+    filter: saturate(1.01);
+    color: #56616a;
+}
+
+.main-entry-button:active:not(:disabled) {
+    transform: translateY(0) scale(var(--app-press-scale));
+}
+
+.disabled-button {
+    opacity: 0.72;
+    cursor: not-allowed;
+    color: rgba(116, 126, 135, 0.84);
+    background: linear-gradient(180deg, rgba(246, 248, 249, 0.74), rgba(237, 241, 244, 0.76));
+}
+
+.disabled-button:hover {
+    background: linear-gradient(180deg, rgba(246, 248, 249, 0.74), rgba(237, 241, 244, 0.76));
+    border-color: rgba(196, 203, 208, 0.42);
+    box-shadow: 0 8px 18px rgba(112, 123, 132, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transform: none;
+    filter: none;
+    color: rgba(116, 126, 135, 0.84);
+}
