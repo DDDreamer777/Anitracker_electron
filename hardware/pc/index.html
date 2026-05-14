@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZAPIS-Pi Controller</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            padding: 30px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .config-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .config-section label {
+            font-size: 16px;
+            color: #34495e;
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        .config-section input {
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            width: 200px;
+            font-size: 14px;
+        }
+        .control-card {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .control-card h2 {
+            color: #2980b9;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .cycle-inputs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px 30px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .cycle-input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cycle-input-row label {
+            font-size: 14px;
+            color: #34495e;
+            white-space: nowrap;
+        }
+        .cycle-input-row input {
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            width: 80px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .cycle-input-row span {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .cycle-note {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        .port-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .port-section label {
+            font-size: 14px;
+            color: #34495e;
+            margin-right: 8px;
+        }
+        .port-section input {
+            padding: 6px 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            width: 80px;
+            font-size: 14px;
+            text-align: center;
+            margin-right: 20px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-start {
+            background: #27ae60;
+            color: #fff;
+        }
+        .btn-start:hover {
+            background: #219a52;
+        }
+        .btn-stop {
+            background: #e74c3c;
+            color: #fff;
+        }
+        .btn-stop:hover {
+            background: #c0392b;
+        }
+        .btn-led-red { background: #e74c3c; color: #fff; }
+        .btn-led-green { background: #2ecc71; color: #fff; }
+        .btn-led-blue { background: #3498db; color: #fff; }
+        .btn-led-white { background: #f1c40f; color: #2c3e50; }
+        .btn-led-off { background: #95a5a6; color: #fff; }
+        .btn-audio-play {
+            background: #8e44ad;
+            color: #fff;
+        }
+        .audio-input {
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            width: 250px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .status-bar {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #fff;
+            display: none;
+        }
+        .status-success { background: #27ae60; display: block; }
+        .status-error { background: #c0392b; display: block; }
+        .status-loading { background: #f39c12; display: block; }
+        .hint {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #7f8c8d;
+            line-height: 1.5;
+        }
+        .cycle-status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #2c3e50;
+            display: none;
+        }
+        .cycle-status.running {
+            display: block;
+            color: #27ae60;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ZAPIS-Pi Controller</h1>
+
+        <!-- IP Config -->
+        <div class="config-section">
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: center;">
+                <div>
+                    <label for="raspberry-ip">树莓派IP：</label>
+                    <input type="text" id="raspberry-ip" value="192.168.2.118" placeholder="IP">
+                </div>
+                <div>
+                    <label for="led-port">LED端口：</label>
+                    <input type="number" id="led-port" value="9999" min="1" max="65535">
+                </div>
+                <div>
+                    <label for="audio-port">音频端口：</label>
+                    <input type="number" id="audio-port" value="9998" min="1" max="65535">
+                </div>
+            </div>
+            <p class="hint" style="margin-top: 10px;">树莓派和电脑需在同一局域网 | 查看端口：<code>sudo netstat -tlnp | grep python</code></p>
+        </div>
+
+        <!-- LED Day/Night Cycle Control -->
+        <div class="control-card">
+            <h2>LED 昼夜循环控制</h2>
+            <div class="cycle-inputs">
+                <div class="cycle-input-row">
+                    <label>昼：</label>
+                    <input type="number" id="day-time" value="10" min="0.5">
+                    <span>分钟</span>
+                </div>
+                <div class="cycle-input-row">
+                    <label>夜：</label>
+                    <input type="number" id="night-time" value="10" min="0.5">
+                    <span>分钟</span>
+                </div>
+                <div class="cycle-input-row">
+                    <label>循环：</label>
+                    <input type="number" id="cycle-count" value="" placeholder="0" min="0" style="width: 70px;">
+                    <span>次</span>
+                    <span class="cycle-note">（0或空=无限）</span>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-start" onclick="startCycle()">开启循环</button>
+                <button class="btn btn-stop" onclick="stopCycle()">停止循环</button>
+            </div>
+            <div class="cycle-status" id="cycle-status"></div>
+            <div class="status-bar" id="led-status">通信状态</div>
+            <p class="hint">昼=白灯亮，夜=灯灭，1次=1个昼夜周期</p>
+        </div>
+
+        <!-- LED Manual Control -->
+        <!--
+        <div class="control-card">
+            <h2>LED 手动颜色控制</h2>
+            <div class="btn-group">
+                <button class="btn btn-led-red" onclick="controlLED('red')">红灯</button>
+                <button class="btn btn-led-green" onclick="controlLED('green')">绿灯</button>
+                <button class="btn btn-led-blue" onclick="controlLED('blue')">蓝灯</button>
+                <button class="btn btn-led-white" onclick="controlLED('white')">白灯</button>
+                <button class="btn btn-led-off" onclick="controlLED('off')">关闭</button>
+            </div>
+            <p class="hint">手动控制会停止循环</p>
+        </div>
+        -->
+
+        <!-- Audio Control -->
+        <div class="control-card">
+            <h2>扬声器音频播放</h2>
+            <input type="text" class="audio-input" id="audio-file" placeholder="输入WAV文件名" value="test.wav">
+            <button class="btn btn-audio-play" onclick="playAudio()">播放</button>
+            <div class="status-bar" id="audio-status">通信状态</div>
+            <p class="hint">音频文件放在树莓派 ./audio_files 目录 | 音频端口9998</p>
+        </div>
+    </div>
+
+    <script>
+        const net = require('net');
+
+        function getRaspberryIP() {
+            return document.getElementById('raspberry-ip').value.trim();
+        }
+
+        function getLEDPort() {
+            return parseInt(document.getElementById('led-port').value) || 9999;
+        }
+
+        function getAudioPort() {
+            return parseInt(document.getElementById('audio-port').value) || 9998;
+        }
+
+        function showStatus(elementId, text, type) {
+            const status = document.getElementById(elementId);
+            status.textContent = text;
+            status.className = 'status-bar';
+            if (type === 'success') status.classList.add('status-success');
+            else if (type === 'error') status.classList.add('status-error');
+            else status.classList.add('status-loading');
+            setTimeout(() => { status.className = 'status-bar'; }, 3000);
+        }
+
+        function setCycleStatus(text, running = false) {
+            const el = document.getElementById('cycle-status');
+            el.textContent = text;
+            el.className = 'cycle-status' + (running ? ' running' : '');
+        }
+
+        // Start day/night cycle
+        function startCycle() {
+            const ip = getRaspberryIP();
+            const dayMin = document.getElementById('day-time').value;
+            const nightMin = document.getElementById('night-time').value;
+            const countVal = document.getElementById('cycle-count').value;
+            const cycleCount = countVal === '' || countVal === '0' ? 0 : parseInt(countVal);
+
+            if (!ip) {
+                showStatus('led-status', '错误：请输入树莓派IP', 'error');
+                return;
+            }
+            if (dayMin <= 0 || nightMin <= 0) {
+                showStatus('led-status', '错误：时间必须大于0', 'error');
+                return;
+            }
+
+            const client = new net.Socket();
+            client.setTimeout(5000);
+
+            // Build command: cycle,day,night[,count]
+            let cmd = `cycle,${dayMin},${nightMin}`;
+            if (cycleCount > 0) {
+                cmd += `,${cycleCount}`;
+            }
+            cmd += '\n';
+
+            client.connect(getLEDPort(), ip, () => {
+                client.write(cmd);
+            });
+
+            client.on('data', (data) => {
+                const response = data.toString().trim();
+                if (response === 'OK') {
+                    const countStr = cycleCount > 0 ? `，共${cycleCount}次` : '（无限）';
+                    showStatus('led-status', `循环已开启：昼${dayMin}min / 夜${nightMin}min${countStr}`, 'success');
+                    const cycleText = cycleCount > 0
+                        ? `循环运行中：昼${dayMin}分钟 → 夜${nightMin}分钟 → ${cycleCount}次后停止`
+                        : `循环运行中：昼${dayMin}分钟 → 夜${nightMin}分钟 → 循环`;
+                    setCycleStatus(cycleText, true);
+                } else {
+                    showStatus('led-status', `错误：${response}`, 'error');
+                    setCycleStatus('');
+                }
+                client.destroy();
+            });
+
+            client.on('error', (err) => {
+                showStatus('led-status', `连接失败：${err.message}`, 'error');
+                setCycleStatus('');
+                client.destroy();
+            });
+
+            client.on('timeout', () => {
+                showStatus('led-status', '连接超时', 'error');
+                setCycleStatus('');
+                client.destroy();
+            });
+        }
+
+        // Stop cycle
+        function stopCycle() {
+            const ip = getRaspberryIP();
+            if (!ip) {
+                showStatus('led-status', '错误：请输入树莓派IP', 'error');
+                return;
+            }
+
+            const client = new net.Socket();
+            client.setTimeout(5000);
+
+            client.connect(getLEDPort(), ip, () => {
+                client.write('stop\n');
+            });
+
+            client.on('data', (data) => {
+                const response = data.toString().trim();
+                if (response === 'OK') {
+                    showStatus('led-status', '循环已停止', 'success');
+                    setCycleStatus('');
+                } else {
+                    showStatus('led-status', `错误：${response}`, 'error');
+                }
+                client.destroy();
+            });
+
+            client.on('error', (err) => {
+                showStatus('led-status', `连接失败：${err.message}`, 'error');
+                client.destroy();
+            });
+
+            client.on('timeout', () => {
+                showStatus('led-status', '连接超时', 'error');
+                client.destroy();
+            });
+        }
+
+        // Manual LED control
+        function controlLED(cmd) {
+            const ip = getRaspberryIP();
+            if (!ip) {
+                showStatus('led-status', '错误：请输入树莓派IP', 'error');
+                return;
+            }
+
+            const client = new net.Socket();
+            client.setTimeout(5000);
+
+            client.connect(getLEDPort(), ip, () => {
+                client.write(cmd + '\n');
+            });
+
+            client.on('data', (data) => {
+                const response = data.toString().trim();
+                if (response === 'OK') {
+                    showStatus('led-status', `执行成功：${cmd}`, 'success');
+                    setCycleStatus('');
+                } else {
+                    showStatus('led-status', `错误：${response}`, 'error');
+                }
+                client.destroy();
+            });
+
+            client.on('error', (err) => {
+                showStatus('led-status', `连接失败：${err.message}`, 'error');
+                client.destroy();
+            });
+
+            client.on('timeout', () => {
+                showStatus('led-status', '连接超时', 'error');
+                client.destroy();
+            });
+        }
+
+        // Audio playback
+        function playAudio() {
+            const ip = getRaspberryIP();
+            const audioFile = document.getElementById('audio-file').value.trim();
+            if (!ip) {
+                showStatus('audio-status', '错误：请输入树莓派IP', 'error');
+                return;
+            }
+            if (!audioFile) {
+                showStatus('audio-status', '错误：请输入文件名', 'error');
+                return;
+            }
+
+            const client = new net.Socket();
+            client.setTimeout(5000);
+
+            client.connect(getAudioPort(), ip, () => {
+                client.write(audioFile + '\n');
+            });
+
+            client.on('data', (data) => {
+                const response = data.toString().trim();
+                if (response === 'OK') {
+                    showStatus('audio-status', `播放中：${audioFile}`, 'success');
+                } else {
+                    showStatus('audio-status', `错误：${response}`, 'error');
+                }
+                client.destroy();
+            });
+
+            client.on('error', (err) => {
+                showStatus('audio-status', `连接失败：${err.message}`, 'error');
+                client.destroy();
+            });
+
+            client.on('timeout', () => {
+                showStatus('audio-status', '连接超时', 'error');
+                client.destroy();
+            });
+        }
+    </script>
+</body>
+</html>

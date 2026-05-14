@@ -15,6 +15,7 @@ const {
 let hardwareControlWindow = null
 let hardwareRouteWindow = null
 let isAppQuitting = false
+const hardwareControlPageFile = 'index.html'
 
 // 处理 Windows 安装/卸载时的启动事件
 if (require('electron-squirrel-startup')) {
@@ -75,7 +76,7 @@ function createHardwareControlWindow() {
     }
   })
 
-  const hardwareIndexPath = path.join(__dirname, 'hardware', 'pc', 'zebrafish_raspi_gui', 'index.html')
+  const hardwareIndexPath = path.join(__dirname, 'hardware', 'pc', hardwareControlPageFile)
   hardwareControlWindow.loadFile(hardwareIndexPath)
 
   console.info(`[HW_OP] Hardware control window opened: ${hardwareIndexPath}`)

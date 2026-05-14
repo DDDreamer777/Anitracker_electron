@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AniTrack - Raspberry Pi Control</title>
+    <link rel="stylesheet" href="../../styles/base.css">
+    <link rel="stylesheet" href="../../styles/components.css">
+    <link rel="stylesheet" href="../../styles/hardware.css">
+</head>
+<body class="hardware-pi-page" data-pi-state="idle">
+    <a class="back-button" href="../../pages/hardware.html" aria-label="返回硬件页面">
+        <svg class="back-button-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M14.71 5.29a1 1 0 0 1 0 1.42L10.42 11l4.29 4.29a1 1 0 1 1-1.42 1.42l-5-5a1 1 0 0 1 0-1.42l5-5a1 1 0 0 1 1.42 0Z" />
+        </svg>
+    </a>
+
+    <main class="hardware-route-shell hardware-pi-shell">
+        <section class="hardware-route-panel hardware-pi-panel">
+            <article class="hardware-route-card hardware-pi-hero-card" role="status" aria-live="polite" aria-atomic="true">
+                <div class="hardware-pi-hero-head">
+                    <p class="hardware-kicker hardware-pi-kicker">Raspberry Pi Control</p>
+                    <span id="piStatusBadge" class="hardware-status-meta hardware-pi-status-badge">未检测</span>
+                </div>
+
+                <div class="hardware-pi-hero-body">
+                    <h1 class="hardware-pi-title">树莓派控制首页</h1>
+                    <p id="piStatusText" class="hardware-pi-description">当前页面用于查看树莓派连接状态与基础信息。</p>
+                </div>
+
+                <div class="hardware-pi-meta-list" aria-label="树莓派状态信息">
+                    <div class="hardware-pi-meta-item">
+                        <span class="hardware-pi-meta-label">设备状态</span>
+                        <strong id="piStatusValue" class="hardware-pi-meta-value">未检测</strong>
+                    </div>
+                    <div class="hardware-pi-meta-item">
+                        <span class="hardware-pi-meta-label">最近检测</span>
+                        <strong id="piStatusTime" class="hardware-pi-meta-value">等待操作</strong>
+                    </div>
+                </div>
+
+                <div class="hardware-route-actions hardware-pi-actions">
+                    <button id="checkPiStatusBtn" class="main-entry-button hardware-open-button hardware-pi-action-button" type="button">查看状态</button>
+                </div>
+            </article>
+
+            <section class="hardware-pi-placeholder-grid" aria-label="后续控制模块">
+                <article class="hardware-route-card hardware-pi-placeholder-card">
+                    <div class="hardware-pi-placeholder-head">
+                        <h2 class="hardware-pi-placeholder-title">灯光控制</h2>
+                        <span class="hardware-status-meta hardware-pi-placeholder-tag">待开放</span>
+                    </div>
+                    <p class="hardware-pi-placeholder-text">该模块将用于展示灯光设备的基础控制能力与状态摘要。</p>
+                </article>
+
+                <article class="hardware-route-card hardware-pi-placeholder-card">
+                    <div class="hardware-pi-placeholder-head">
+                        <h2 class="hardware-pi-placeholder-title">音频控制</h2>
+                        <span class="hardware-status-meta hardware-pi-placeholder-tag">待开放</span>
+                    </div>
+                    <p class="hardware-pi-placeholder-text">该模块将用于查看音频输出相关配置，并保留后续接入空间。</p>
+                </article>
+
+                <article class="hardware-route-card hardware-pi-placeholder-card">
+                    <div class="hardware-pi-placeholder-head">
+                        <h2 class="hardware-pi-placeholder-title">接口配置</h2>
+                        <span class="hardware-status-meta hardware-pi-placeholder-tag">待开放</span>
+                    </div>
+                    <p class="hardware-pi-placeholder-text">该模块将用于统一展示接口接入信息与基础参数说明。</p>
+                </article>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        const piStatusBadge = document.getElementById('piStatusBadge');
+        const piStatusText = document.getElementById('piStatusText');
+        const piStatusValue = document.getElementById('piStatusValue');
+        const piStatusTime = document.getElementById('piStatusTime');
+        const checkPiStatusBtn = document.getElementById('checkPiStatusBtn');
+
+        const piStatusPresets = {
+            idle: {
+                state: 'idle',
+                badge: '未检测',
+                text: '当前页面用于查看树莓派连接状态与基础信息。',
+                value: '未检测',
+                time: '等待操作'
+            },
+            checking: {
+                state: 'checking',
+                badge: '检测中',
+                text: '正在检查设备连接状态，请稍候。',
+                value: '检测中',
+                time: '正在更新'
+            },
+            connected: {
+                state: 'connected',
+                badge: '已连接',
+                text: '设备连接状态正常，可继续查看基础信息。',
+                value: '连接正常'
+            }
+        };
+
+        function formatCurrentTime() {
+            return new Intl.DateTimeFormat('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).format(new Date());
+        }
+
+        function renderPiStatus(presetKey) {
+            const preset = piStatusPresets[presetKey];
+            if (!preset) {
+                return;
+            }
+
+            document.body.dataset.piState = preset.state;
+            piStatusBadge.textContent = preset.badge;
+            piStatusText.textContent = preset.text;
+            piStatusValue.textContent = preset.value;
+            piStatusTime.textContent = preset.time || formatCurrentTime();
+        }
+
+        renderPiStatus('idle');
+
+        checkPiStatusBtn.addEventListener('click', function () {
+            checkPiStatusBtn.disabled = true;
+            checkPiStatusBtn.textContent = '检测中...';
+            renderPiStatus('checking');
+
+            window.setTimeout(function () {
+                renderPiStatus('connected');
+                checkPiStatusBtn.disabled = false;
+                checkPiStatusBtn.textContent = '查看状态';
+            }, 900);
+        });
+    </script>
+</body>
+</html>
